@@ -13,6 +13,6 @@
     "noUncheckedIndexedAccess": true,
     "sourceMap": true
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "src/routes/health.routes.ts", "src/routes/database-health.routes.ts"],
   "exclude": ["node_modules", "dist"]
 }

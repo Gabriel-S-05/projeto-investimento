@@ -1,5 +1,6 @@
 ﻿import Fastify from 'fastify'
 
+import { databaseHealthRoutes } from './routes/database-health.routes.js'
 import { healthRoutes } from './routes/health.routes.js'
 
 export function buildApp() {
@@ -8,6 +9,7 @@ export function buildApp() {
   })
 
   app.register(healthRoutes)
+  app.register(databaseHealthRoutes)
 
   app.setNotFoundHandler(async (request, reply) => {
     return reply.status(404).send({

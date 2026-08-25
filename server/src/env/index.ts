@@ -1,21 +1,30 @@
-﻿import { z } from 'zod'
+﻿import 'dotenv/config'
+
+import { z } from 'zod'
 
 const environmentSchema = z.object({
-  NODE_ENV: z
-    .enum(['development', 'test', 'production'])
-    .default('development'),
+  NODE_ENV: z.enum([
+    'development',
+    'test',
+    'production',
+  ]),
 
-  HOST: z.string().default('127.0.0.1'),
+  HOST: z.string().min(1),
 
   PORT: z.coerce
     .number()
     .int()
     .positive()
-    .max(65535)
-    .default(3333),
+    .max(65535),
+
+  DB_SERVER: z.string().min(1),
+
+  DB_DATABASE: z.string().min(1),
 })
 
-const parsedEnvironment = environmentSchema.safeParse(process.env)
+const parsedEnvironment = environmentSchema.safeParse(
+  process.env,
+)
 
 if (!parsedEnvironment.success) {
   console.error(
