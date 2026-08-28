@@ -6,6 +6,8 @@ import {
 } from '@tanstack/react-query'
 import { RouterProvider } from 'react-router-dom'
 
+import { BanksProvider } from './features/banks/context/BanksContext'
+
 import { appRouter } from './routes/app-router'
 
 import './styles/global.css'
@@ -28,8 +30,14 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={appRouter} />
+    <QueryClientProvider
+      client={queryClient}
+    >
+      <BanksProvider>
+        <RouterProvider
+          router={appRouter}
+        />
+      </BanksProvider>
     </QueryClientProvider>
   </StrictMode>,
 )
