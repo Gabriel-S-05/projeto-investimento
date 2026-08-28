@@ -23,7 +23,8 @@ import { routePaths } from '../../../routes/route-paths'
 import {
   banks,
   type BankOption,
-} from '../data/bank'
+} from '../../banks/data/bank'
+import { useBanks } from '../../banks/context/BanksContext'
 
 import styles from './AuthPages.module.css'
 
@@ -306,6 +307,11 @@ const bankSelectStyles: StylesConfig<
 }
 
 export function RegisterPage() {
+  const {
+    setSelectedBanks,
+  } = useBanks()
+
+
   const [step, setStep] =
     useState<1 | 2>(1)
 
@@ -384,6 +390,7 @@ export function RegisterPage() {
         banks: data.banks,
       },
     )
+    setSelectedBanks(data.banks)
 
     setIsComplete(true)
   }
