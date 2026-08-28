@@ -1,0 +1,194 @@
+.page {
+  display: grid;
+  min-height: 100vh;
+  grid-template-columns:
+    minmax(360px, 0.9fr)
+    minmax(480px, 1.1fr);
+}
+
+.presentation {
+  position: relative;
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  padding: 42px;
+  color: #ffffff;
+  background:
+    radial-gradient(
+      circle at 15% 15%,
+      rgba(80, 224, 186, 0.28),
+      transparent 32%
+    ),
+    radial-gradient(
+      circle at 85% 78%,
+      rgba(35, 174, 145, 0.25),
+      transparent 28%
+    ),
+    linear-gradient(
+      145deg,
+      #0b292b 0%,
+      #103b3a 52%,
+      #0c2428 100%
+    );
+}
+
+.presentation::after {
+  position: absolute;
+  right: -100px;
+  bottom: -120px;
+  width: 360px;
+  height: 360px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+  content: "";
+}
+
+.brand,
+.mobileBrand {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  font-size: 1.04rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.brand {
+  position: relative;
+  z-index: 1;
+}
+
+.brandIcon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  color: #062824;
+  background: #6de4c3;
+  border-radius: 13px;
+}
+
+.presentationContent {
+  position: relative;
+  z-index: 1;
+  max-width: 540px;
+}
+
+.eyebrow {
+  display: inline-flex;
+  margin-bottom: 20px;
+  padding: 7px 12px;
+  color: #9aecd4;
+  background: rgba(109, 228, 195, 0.1);
+  border: 1px solid rgba(109, 228, 195, 0.18);
+  border-radius: var(--radius-pill);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.presentation h1 {
+  max-width: 510px;
+  margin: 0;
+  font-size: clamp(2.3rem, 4vw, 4.5rem);
+  line-height: 1.02;
+  letter-spacing: -0.055em;
+}
+
+.presentationContent > p {
+  max-width: 500px;
+  margin: 22px 0 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 1.03rem;
+  line-height: 1.7;
+}
+
+.benefits {
+  display: grid;
+  gap: 13px;
+  margin-top: 34px;
+}
+
+.benefit {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.benefit svg {
+  flex: 0 0 auto;
+  color: #6de4c3;
+}
+
+.presentationFooter {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 0.78rem;
+}
+
+.formArea {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 40px;
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(32, 170, 140, 0.09),
+      transparent 32%
+    ),
+    var(--color-background);
+}
+
+.card {
+  width: min(100%, 470px);
+  padding: 40px;
+  background: var(--color-surface);
+  border: 1px solid rgba(206, 220, 224, 0.8);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+}
+
+.mobileBrand {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .page {
+    grid-template-columns: 1fr;
+  }
+
+  .presentation {
+    display: none;
+  }
+
+  .formArea {
+    align-content: center;
+    gap: 22px;
+    padding: 28px 20px;
+  }
+
+  .mobileBrand {
+    display: inline-flex;
+    color: var(--color-primary-700);
+  }
+}
+
+@media (max-width: 520px) {
+  .formArea {
+    padding: 22px 14px;
+  }
+
+  .card {
+    padding: 28px 22px;
+    border-radius: var(--radius-lg);
+  }
+}
