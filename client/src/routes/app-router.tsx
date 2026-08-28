@@ -5,6 +5,7 @@ import {
 
 import { LoginPage } from '../features/auth/pages/LoginPage'
 import { RegisterPage } from '../features/auth/pages/RegisterPage'
+import { BanksPage } from '../features/banks/pages/BankPage'
 
 import { routePaths } from './route-paths'
 
@@ -25,6 +26,10 @@ export const appRouter = createBrowserRouter([
   {
     path: routePaths.register,
     element: <RegisterPage />,
+  },
+  {
+    path: routePaths.banks,
+    element: <BanksPage />,
   },
   {
     path: '*',
