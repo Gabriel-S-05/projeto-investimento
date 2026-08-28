@@ -8,6 +8,7 @@ import { z } from 'zod'
 import { Button } from '../../../components/ui/Button/IndexButton'
 import { TextField } from '../../../components/ui/TextField/IndexTextField'
 import { AuthLayout } from '../../../layouts/AuthLayout/AuthLayout'
+import { PasswordField } from '../../../components/ui/PasswordField/PasswordField'
 import { routePaths } from '../../../routes/route-paths'
 
 import styles from './AuthPages.module.css'
@@ -82,9 +83,8 @@ export function LoginPage() {
           {...register('username')}
         />
 
-        <TextField
+        <PasswordField
           label="Senha"
-          type="password"
           autoComplete="current-password"
           placeholder="Digite sua senha"
           error={errors.password?.message}
