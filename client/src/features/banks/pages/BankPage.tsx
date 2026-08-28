@@ -1,4 +1,8 @@
 import {
+  useCallback,
+  useState,
+} from 'react'
+import {
   ArrowRight,
   Building2,
   Plus,
@@ -7,15 +11,41 @@ import {
 } from 'lucide-react'
 
 import { Button } from '../../../components/ui/Button/IndexButton'
+import { AddBankModal } from '../components/AddBankModal/IndexAddBankModal'
 import { useBanks } from '../context/BanksContext'
 
 import styles from './BankPage.module.css'
 
 export function BanksPage() {
+  const [
+    isAddBankModalOpen,
+    setIsAddBankModalOpen,
+  ] = useState(false)
+
   const {
     selectedBanks,
+    availableBanks,
+    addBanks,
     removeBank,
   } = useBanks()
+
+  const openAddBankModal =
+    useCallback((): void => {
+      setIsAddBankModalOpen(true)
+    }, [])
+
+  const closeAddBankModal =
+    useCallback((): void => {
+      setIsAddBankModalOpen(false)
+    }, [])
+
+  const handleAddBanks =
+    useCallback(
+      (bankIds: string[]): void => {
+        addBanks(bankIds)
+      },
+      [addBanks],
+    )
 
   return (
     <main className={styles.page}>
@@ -35,13 +65,19 @@ export function BanksPage() {
           </p>
         </div>
 
-        <Button type="button">
-          <Plus
-            size={18}
-            aria-hidden="true"
-          />
-          Adicionar banco
-        </Button>
+        {selectedBanks.length > 0 ? (
+          <Button
+            type="button"
+            onClick={openAddBankModal}
+          >
+            <Plus
+              size={18}
+              aria-hidden="true"
+            />
+
+            Adicionar banco
+          </Button>
+        ) : null}
       </header>
 
       {selectedBanks.length === 0 ? (
@@ -53,18 +89,24 @@ export function BanksPage() {
             />
           </div>
 
-          <h2>Nenhum banco adicionado</h2>
+          <h2>
+            Nenhum banco adicionado
+          </h2>
 
           <p>
             Adicione as instituições que você utiliza para
             começar a organizar sua vida financeira.
           </p>
 
-          <Button type="button">
+          <Button
+            type="button"
+            onClick={openAddBankModal}
+          >
             <Plus
               size={18}
               aria-hidden="true"
             />
+
             Adicionar primeiro banco
           </Button>
         </section>
@@ -91,7 +133,9 @@ export function BanksPage() {
                   className={styles.removeButton}
                   aria-label={`Remover ${bank.label}`}
                   title={`Remover ${bank.label}`}
-                  onClick={() => removeBank(bank.value)}
+                  onClick={() => {
+                    removeBank(bank.value)
+                  }}
                 >
                   <Trash2
                     size={18}
@@ -105,7 +149,9 @@ export function BanksPage() {
                   Instituição financeira
                 </span>
 
-                <h2>{bank.label}</h2>
+                <h2>
+                  {bank.label}
+                </h2>
 
                 <p>
                   Dados ainda não informados.
@@ -115,6 +161,7 @@ export function BanksPage() {
               <button
                 type="button"
                 className={styles.detailsButton}
+                aria-label={`Ver detalhes de ${bank.label}`}
               >
                 Ver detalhes
 
@@ -126,25 +173,37 @@ export function BanksPage() {
             </article>
           ))}
 
-          <button
-            type="button"
-            className={styles.addCard}
-          >
-            <span className={styles.addCardIcon}>
-              <Plus
-                size={26}
-                aria-hidden="true"
-              />
-            </span>
+          {availableBanks.length > 0 ? (
+            <button
+              type="button"
+              className={styles.addCard}
+              onClick={openAddBankModal}
+            >
+              <span className={styles.addCardIcon}>
+                <Plus
+                  size={26}
+                  aria-hidden="true"
+                />
+              </span>
 
-            <strong>Adicionar banco</strong>
+              <strong>
+                Adicionar banco
+              </strong>
 
-            <span>
-              Inclua outra instituição na sua organização.
-            </span>
-          </button>
+              <span>
+                Inclua outra instituição na sua organização.
+              </span>
+            </button>
+          ) : null}
         </section>
       )}
+
+      <AddBankModal
+        isOpen={isAddBankModalOpen}
+        availableBanks={availableBanks}
+        onClose={closeAddBankModal}
+        onAddBanks={handleAddBanks}
+      />
     </main>
   )
 }
