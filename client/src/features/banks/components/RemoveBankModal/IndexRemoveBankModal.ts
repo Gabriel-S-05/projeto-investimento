@@ -1,0 +1,3 @@
+export {
+  RemoveBankModal,
+} from './RemoveBankModal'

@@ -12,7 +12,9 @@ import {
 
 import { Button } from '../../../components/ui/Button/IndexButton'
 import { AddBankModal } from '../components/AddBankModal/IndexAddBankModal'
+import { RemoveBankModal } from '../components/RemoveBankModal/IndexRemoveBankModal'
 import { useBanks } from '../context/BanksContext'
+import type { BankOption } from '../data/bank'
 
 import styles from './BankPage.module.css'
 
@@ -21,6 +23,13 @@ export function BanksPage() {
     isAddBankModalOpen,
     setIsAddBankModalOpen,
   ] = useState(false)
+
+  const [
+    bankToRemove,
+    setBankToRemove,
+  ] = useState<BankOption | null>(
+    null,
+  )
 
   const {
     selectedBanks,
@@ -47,6 +56,28 @@ export function BanksPage() {
       [addBanks],
     )
 
+  const openRemoveBankModal =
+    useCallback(
+      (bank: BankOption): void => {
+        setBankToRemove(bank)
+      },
+      [],
+    )
+
+  const closeRemoveBankModal =
+    useCallback((): void => {
+      setBankToRemove(null)
+    }, [])
+
+  const handleConfirmRemove =
+    useCallback(
+      (bankId: string): void => {
+        removeBank(bankId)
+        setBankToRemove(null)
+      },
+      [removeBank],
+    )
+
   return (
     <main className={styles.page}>
       <header className={styles.header}>
@@ -65,7 +96,8 @@ export function BanksPage() {
           </p>
         </div>
 
-        {selectedBanks.length > 0 ? (
+        {selectedBanks.length > 0 &&
+        availableBanks.length > 0 ? (
           <Button
             type="button"
             onClick={openAddBankModal}
@@ -115,63 +147,88 @@ export function BanksPage() {
           className={styles.grid}
           aria-label="Instituições adicionadas"
         >
-          {selectedBanks.map((bank) => (
-            <article
-              key={bank.value}
-              className={styles.card}
-            >
-              <div className={styles.cardHeader}>
-                <div className={styles.bankIcon}>
-                  <Building2
-                    size={24}
-                    aria-hidden="true"
-                  />
+          {selectedBanks.map(
+            (bank) => (
+              <article
+                key={bank.value}
+                className={styles.card}
+              >
+                <div
+                  className={
+                    styles.cardHeader
+                  }
+                >
+                  <div
+                    className={
+                      styles.bankIcon
+                    }
+                  >
+                    <Building2
+                      size={24}
+                      aria-hidden="true"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    className={
+                      styles.removeButton
+                    }
+                    aria-label={`Remover ${bank.label}`}
+                    title={`Remover ${bank.label}`}
+                    onClick={() => {
+                      openRemoveBankModal(
+                        bank,
+                      )
+                    }}
+                  >
+                    <Trash2
+                      size={18}
+                      aria-hidden="true"
+                    />
+                  </button>
+                </div>
+
+                <div
+                  className={
+                    styles.cardContent
+                  }
+                >
+                  <span
+                    className={
+                      styles.cardEyebrow
+                    }
+                  >
+                    Instituição financeira
+                  </span>
+
+                  <h2>
+                    {bank.label}
+                  </h2>
+
+                  <p>
+                    Dados ainda não
+                    informados.
+                  </p>
                 </div>
 
                 <button
                   type="button"
-                  className={styles.removeButton}
-                  aria-label={`Remover ${bank.label}`}
-                  title={`Remover ${bank.label}`}
-                  onClick={() => {
-                    removeBank(bank.value)
-                  }}
+                  className={
+                    styles.detailsButton
+                  }
+                  aria-label={`Ver detalhes de ${bank.label}`}
                 >
-                  <Trash2
+                  Ver detalhes
+
+                  <ArrowRight
                     size={18}
                     aria-hidden="true"
                   />
                 </button>
-              </div>
-
-              <div className={styles.cardContent}>
-                <span className={styles.cardEyebrow}>
-                  Instituição financeira
-                </span>
-
-                <h2>
-                  {bank.label}
-                </h2>
-
-                <p>
-                  Dados ainda não informados.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                className={styles.detailsButton}
-                aria-label={`Ver detalhes de ${bank.label}`}
-              >
-                Ver detalhes
-
-                <ArrowRight
-                  size={18}
-                  aria-hidden="true"
-                />
-              </button>
-            </article>
-          ))}
+              </article>
+            ),
+          )}
 
           {availableBanks.length > 0 ? (
             <button
@@ -179,7 +236,11 @@ export function BanksPage() {
               className={styles.addCard}
               onClick={openAddBankModal}
             >
-              <span className={styles.addCardIcon}>
+              <span
+                className={
+                  styles.addCardIcon
+                }
+              >
                 <Plus
                   size={26}
                   aria-hidden="true"
@@ -191,7 +252,8 @@ export function BanksPage() {
               </strong>
 
               <span>
-                Inclua outra instituição na sua organização.
+                Inclua outra instituição
+                na sua organização.
               </span>
             </button>
           ) : null}
@@ -199,10 +261,31 @@ export function BanksPage() {
       )}
 
       <AddBankModal
-        isOpen={isAddBankModalOpen}
-        availableBanks={availableBanks}
-        onClose={closeAddBankModal}
-        onAddBanks={handleAddBanks}
+        isOpen={
+          isAddBankModalOpen
+        }
+        availableBanks={
+          availableBanks
+        }
+        onClose={
+          closeAddBankModal
+        }
+        onAddBanks={
+          handleAddBanks
+        }
+      />
+
+      <RemoveBankModal
+        isOpen={
+          bankToRemove !== null
+        }
+        bank={bankToRemove}
+        onClose={
+          closeRemoveBankModal
+        }
+        onConfirm={
+          handleConfirmRemove
+        }
       />
     </main>
   )
