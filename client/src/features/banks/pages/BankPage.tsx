@@ -6,8 +6,12 @@ import {
   Plus,
   WalletCards,
 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 
 import { Button } from '../../../components/ui/Button/IndexButton'
+import {
+  getBankDetailsPath,
+} from '../../../routes/route-paths'
 import { AddBankModal } from '../components/AddBankModal/IndexAddBankModal'
 import { BankCard } from '../components/BankCard/IndexBankCard'
 import { RemoveBankModal } from '../components/RemoveBankModal/IndexRemoveBankModal'
@@ -17,6 +21,8 @@ import type { BankOption } from '../data/bank'
 import styles from './BankPage.module.css'
 
 export function BanksPage() {
+  const navigate = useNavigate()
+
   const [
     isAddBankModalOpen,
     setIsAddBankModalOpen,
@@ -79,12 +85,13 @@ export function BanksPage() {
   const handleViewDetails =
     useCallback(
       (bank: BankOption): void => {
-        console.log(
-          'Ver detalhes da instituição:',
-          bank.value,
+        navigate(
+          getBankDetailsPath(
+            bank.value,
+          ),
         )
       },
-      [],
+      [navigate],
     )
 
   const hasSelectedBanks =
@@ -165,19 +172,21 @@ export function BanksPage() {
           className={styles.grid}
           aria-label="Instituições adicionadas"
         >
-          {selectedBanks.map((bank) => (
-            <BankCard
-              key={bank.value}
-              bank={bank}
-              holderName="Finance App"
-              onViewDetails={
-                handleViewDetails
-              }
-              onRequestRemove={
-                openRemoveBankModal
-              }
-            />
-          ))}
+          {selectedBanks.map(
+            (bank) => (
+              <BankCard
+                key={bank.value}
+                bank={bank}
+                holderName="Finance App"
+                onViewDetails={
+                  handleViewDetails
+                }
+                onRequestRemove={
+                  openRemoveBankModal
+                }
+              />
+            ),
+          )}
 
           {hasAvailableBanks ? (
             <button

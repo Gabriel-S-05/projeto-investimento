@@ -4,4 +4,11 @@ export const routePaths = {
   register: '/cadastro',
   dashboard: '/dashboard',
   banks: '/bancos',
+  bankDetails: '/bancos/:bankId',
 } as const
+
+export function getBankDetailsPath(
+  bankId: string,
+): string {
+  return `/bancos/${bankId}`
+}
