@@ -3,15 +3,13 @@ import {
   useState,
 } from 'react'
 import {
-  ArrowRight,
-  Building2,
   Plus,
-  Trash2,
   WalletCards,
 } from 'lucide-react'
 
 import { Button } from '../../../components/ui/Button/IndexButton'
 import { AddBankModal } from '../components/AddBankModal/IndexAddBankModal'
+import { BankCard } from '../components/BankCard/IndexBankCard'
 import { RemoveBankModal } from '../components/RemoveBankModal/IndexRemoveBankModal'
 import { useBanks } from '../context/BanksContext'
 import type { BankOption } from '../data/bank'
@@ -78,6 +76,23 @@ export function BanksPage() {
       [removeBank],
     )
 
+  const handleViewDetails =
+    useCallback(
+      (bank: BankOption): void => {
+        console.log(
+          'Ver detalhes da instituição:',
+          bank.value,
+        )
+      },
+      [],
+    )
+
+  const hasSelectedBanks =
+    selectedBanks.length > 0
+
+  const hasAvailableBanks =
+    availableBanks.length > 0
+
   return (
     <main className={styles.page}>
       <header className={styles.header}>
@@ -96,8 +111,8 @@ export function BanksPage() {
           </p>
         </div>
 
-        {selectedBanks.length > 0 &&
-        availableBanks.length > 0 ? (
+        {hasSelectedBanks &&
+        hasAvailableBanks ? (
           <Button
             type="button"
             onClick={openAddBankModal}
@@ -112,8 +127,11 @@ export function BanksPage() {
         ) : null}
       </header>
 
-      {selectedBanks.length === 0 ? (
-        <section className={styles.emptyState}>
+      {!hasSelectedBanks ? (
+        <section
+          className={styles.emptyState}
+          aria-labelledby="empty-banks-title"
+        >
           <div className={styles.emptyIcon}>
             <WalletCards
               size={34}
@@ -121,7 +139,7 @@ export function BanksPage() {
             />
           </div>
 
-          <h2>
+          <h2 id="empty-banks-title">
             Nenhum banco adicionado
           </h2>
 
@@ -147,94 +165,26 @@ export function BanksPage() {
           className={styles.grid}
           aria-label="Instituições adicionadas"
         >
-          {selectedBanks.map(
-            (bank) => (
-              <article
-                key={bank.value}
-                className={styles.card}
-              >
-                <div
-                  className={
-                    styles.cardHeader
-                  }
-                >
-                  <div
-                    className={
-                      styles.bankIcon
-                    }
-                  >
-                    <Building2
-                      size={24}
-                      aria-hidden="true"
-                    />
-                  </div>
+          {selectedBanks.map((bank) => (
+            <BankCard
+              key={bank.value}
+              bank={bank}
+              holderName="Finance App"
+              onViewDetails={
+                handleViewDetails
+              }
+              onRequestRemove={
+                openRemoveBankModal
+              }
+            />
+          ))}
 
-                  <button
-                    type="button"
-                    className={
-                      styles.removeButton
-                    }
-                    aria-label={`Remover ${bank.label}`}
-                    title={`Remover ${bank.label}`}
-                    onClick={() => {
-                      openRemoveBankModal(
-                        bank,
-                      )
-                    }}
-                  >
-                    <Trash2
-                      size={18}
-                      aria-hidden="true"
-                    />
-                  </button>
-                </div>
-
-                <div
-                  className={
-                    styles.cardContent
-                  }
-                >
-                  <span
-                    className={
-                      styles.cardEyebrow
-                    }
-                  >
-                    Instituição financeira
-                  </span>
-
-                  <h2>
-                    {bank.label}
-                  </h2>
-
-                  <p>
-                    Dados ainda não
-                    informados.
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  className={
-                    styles.detailsButton
-                  }
-                  aria-label={`Ver detalhes de ${bank.label}`}
-                >
-                  Ver detalhes
-
-                  <ArrowRight
-                    size={18}
-                    aria-hidden="true"
-                  />
-                </button>
-              </article>
-            ),
-          )}
-
-          {availableBanks.length > 0 ? (
+          {hasAvailableBanks ? (
             <button
               type="button"
               className={styles.addCard}
               onClick={openAddBankModal}
+              aria-label="Adicionar outra instituição"
             >
               <span
                 className={
@@ -252,8 +202,7 @@ export function BanksPage() {
               </strong>
 
               <span>
-                Inclua outra instituição
-                na sua organização.
+                Inclua outra instituição na sua organização.
               </span>
             </button>
           ) : null}
@@ -261,31 +210,17 @@ export function BanksPage() {
       )}
 
       <AddBankModal
-        isOpen={
-          isAddBankModalOpen
-        }
-        availableBanks={
-          availableBanks
-        }
-        onClose={
-          closeAddBankModal
-        }
-        onAddBanks={
-          handleAddBanks
-        }
+        isOpen={isAddBankModalOpen}
+        availableBanks={availableBanks}
+        onClose={closeAddBankModal}
+        onAddBanks={handleAddBanks}
       />
 
       <RemoveBankModal
-        isOpen={
-          bankToRemove !== null
-        }
+        isOpen={bankToRemove !== null}
         bank={bankToRemove}
-        onClose={
-          closeRemoveBankModal
-        }
-        onConfirm={
-          handleConfirmRemove
-        }
+        onClose={closeRemoveBankModal}
+        onConfirm={handleConfirmRemove}
       />
     </main>
   )
