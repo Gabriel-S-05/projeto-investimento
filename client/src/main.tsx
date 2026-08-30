@@ -8,6 +8,7 @@ import { RouterProvider } from 'react-router-dom'
 
 import { BanksProvider } from './features/banks/context/BanksContext'
 import { BankDetailsProvider } from './features/banks/context/BankDetailsContext'
+import { IncomeProvider } from './features/income/context/IncomeContext'
 
 import { appRouter } from './routes/app-router'
 
@@ -36,9 +37,11 @@ createRoot(rootElement).render(
     >
       <BanksProvider>
         <BankDetailsProvider>
-          <RouterProvider
-            router={appRouter}
-          />
+          <IncomeProvider>
+            <RouterProvider
+              router={appRouter}
+            />
+          </IncomeProvider>
         </BankDetailsProvider>
       </BanksProvider>
     </QueryClientProvider>

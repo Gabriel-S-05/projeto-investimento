@@ -3,7 +3,6 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-
 import {
   ArrowLeft,
   Banknote,
@@ -22,17 +21,19 @@ import {
 } from 'react-router-dom'
 
 import { Button } from '../../../components/ui/Button/IndexButton'
-import { routePaths } from '../../../routes/route-paths'
-import { BankCard } from '../components/BankCard/IndexBankCard'
-import { useBanks } from '../context/BanksContext'
+import { IncomeForm } from '../../income/components/IncomeForm/IndexIncomeForm'
+import { useIncome } from '../../income/context/IncomeContext'
+import type { IncomeFormValues } from '../../income/types/income'
 import { AddBalanceModal } from '../components/AddBalanceModal/IndexAddBalanceModal'
-import type { BankAccountDetails } from '../types/bank-details'
+import { BankCard } from '../components/BankCard/IndexBankCard'
 import { useBankDetails } from '../context/BankDetailsContext'
+import { useBanks } from '../context/BanksContext'
+import type { BankAccountDetails } from '../types/bank-details'
+import { routePaths } from '../../../routes/route-paths'
 
 import styles from './BankDetailsPage.module.css'
 
 type DetailsSection =
-  | 'income'
   | 'cards'
   | 'installments'
   | 'investments'
@@ -65,6 +66,20 @@ function formatReferenceDate(
   return `${day}/${month}/${year}`
 }
 
+function formatCurrency(
+  valueInCents: number,
+): string {
+  return new Intl.NumberFormat(
+    'pt-BR',
+    {
+      style: 'currency',
+      currency: 'BRL',
+    },
+  ).format(
+    valueInCents / 100,
+  )
+}
+
 function EmptySection({
   icon,
   title,
@@ -79,9 +94,13 @@ function EmptySection({
       </div>
 
       <div className={styles.emptySectionContent}>
-        <h3>{title}</h3>
+        <h3>
+          {title}
+        </h3>
 
-        <p>{description}</p>
+        <p>
+          {description}
+        </p>
       </div>
 
       <Button
@@ -101,31 +120,77 @@ function EmptySection({
 }
 
 export function BankDetailsPage() {
-  const [isAddBalanceModalOpen, setIsAddBalanceModalOpen] = useState(false)
+  const [
+    isAddBalanceModalOpen,
+    setIsAddBalanceModalOpen,
+  ] = useState(false)
 
-  const { bankId } = useParams<{
+  const [
+    isIncomeFormOpen,
+    setIsIncomeFormOpen,
+  ] = useState(false)
+
+  const {
+    bankId,
+  } = useParams<{
     bankId: string
   }>()
 
-  const { selectedBanks } = useBanks()
+  const {
+    selectedBanks,
+  } = useBanks()
 
-  const {getAccountDetails, saveAccountDetails} = useBankDetails()
+  const {
+    getAccountDetails,
+    saveAccountDetails,
+  } = useBankDetails()
 
-  const bank = selectedBanks.find(
-    (selectedBank) =>
-      selectedBank.value === bankId,
-  )
+  const {
+    getIncomeSources,
+    getEstimatedMonthlyIncomeInCents,
+    addIncomeSource,
+  } = useIncome()
 
-  const accountDetails = bankId ? getAccountDetails(bankId) : null
+  const bank =
+    selectedBanks.find(
+      (selectedBank) =>
+        selectedBank.value ===
+        bankId,
+    )
+
+  const accountDetails =
+    bankId
+      ? getAccountDetails(
+          bankId,
+        )
+      : null
+
+  const incomeSources =
+    bankId
+      ? getIncomeSources(
+          bankId,
+        )
+      : []
+
+  const monthlyIncomeInCents =
+    bankId
+      ? getEstimatedMonthlyIncomeInCents(
+          bankId,
+        )
+      : 0
 
   const openAddBalanceModal =
-  useCallback((): void => {
-    setIsAddBalanceModalOpen(true)
-  }, [])
+    useCallback((): void => {
+      setIsAddBalanceModalOpen(
+        true,
+      )
+    }, [])
 
   const closeAddBalanceModal =
     useCallback((): void => {
-      setIsAddBalanceModalOpen(false)
+      setIsAddBalanceModalOpen(
+        false,
+      )
     }, [])
 
   const handleSaveBalance =
@@ -138,11 +203,50 @@ export function BankDetailsPage() {
           updatedAccountDetails,
         )
       },
-      [saveAccountDetails],
+      [
+        saveAccountDetails,
+      ],
     )
 
+  const openIncomeForm =
+    useCallback((): void => {
+      setIsIncomeFormOpen(
+        true,
+      )
+    }, [])
 
-  if (!bankId || !bank) {
+  const closeIncomeForm =
+    useCallback((): void => {
+      setIsIncomeFormOpen(
+        false,
+      )
+    }, [])
+
+  const handleSaveIncome =
+    useCallback(
+      (
+        values:
+          IncomeFormValues,
+      ): void => {
+        if (!bankId) {
+          return
+        }
+
+        addIncomeSource(
+          bankId,
+          values,
+        )
+      },
+      [
+        addIncomeSource,
+        bankId,
+      ],
+    )
+
+  if (
+    !bankId ||
+    !bank
+  ) {
     return (
       <Navigate
         to={routePaths.banks}
@@ -184,7 +288,9 @@ export function BankDetailsPage() {
               Detalhes da instituição
             </span>
 
-            <h1>{bank.label}</h1>
+            <h1>
+              {bank.label}
+            </h1>
 
             <p>
               Organize o saldo, os recebimentos, os cartões,
@@ -216,7 +322,9 @@ export function BankDetailsPage() {
                   Resumo financeiro
                 </span>
 
-                <h2>Visão geral</h2>
+                <h2>
+                  Visão geral
+                </h2>
               </div>
 
               <Landmark
@@ -227,45 +335,61 @@ export function BankDetailsPage() {
 
             <div className={styles.summaryGrid}>
               <article className={styles.summaryItem}>
-                <span>Saldo atual</span>
+                <span>
+                  Saldo atual
+                </span>
 
                 <strong>
                   {accountDetails
-                    ? new Intl.NumberFormat(
-                        'pt-BR',
-                        {
-                          style: 'currency',
-                          currency: 'BRL',
-                        },
-                      ).format(
+                    ? formatCurrency(
                         accountDetails
-                          .currentBalanceInCents /
-                          100,
+                          .currentBalanceInCents,
                       )
                     : 'Não informado'}
                 </strong>
               </article>
 
-
               <article className={styles.summaryItem}>
-                <span>Entradas mensais</span>
-                <strong>Não informado</strong>
+                <span>
+                  Entradas mensais
+                </span>
+
+                <strong>
+                  {incomeSources.length > 0
+                    ? formatCurrency(
+                        monthlyIncomeInCents,
+                      )
+                    : 'Não informado'}
+                </strong>
               </article>
 
               <article className={styles.summaryItem}>
-                <span>Fatura atual</span>
-                <strong>Não informado</strong>
+                <span>
+                  Fatura atual
+                </span>
+
+                <strong>
+                  Não informado
+                </strong>
               </article>
 
               <article className={styles.summaryItem}>
-                <span>Total investido</span>
-                <strong>Não informado</strong>
+                <span>
+                  Total investido
+                </span>
+
+                <strong>
+                  Não informado
+                </strong>
               </article>
             </div>
+
             <Button
               type="button"
               fullWidth
-              onClick={openAddBalanceModal}
+              onClick={
+                openAddBalanceModal
+              }
             >
               <Plus
                 size={18}
@@ -309,18 +433,22 @@ export function BankDetailsPage() {
                   aria-hidden="true"
                 />
               }
-            title="Saldo e conta"
-            description={
-              accountDetails
-                ? `${accountDetails.nickname}. Saldo atualizado em ${formatReferenceDate(accountDetails.referenceDate)}.`
-                : 'Informe o saldo atual e o tipo de conta que você possui nesta instituição.'
-            }
-            buttonLabel={
-              accountDetails
-                ? 'Editar saldo'
-                : 'Adicionar saldo'
-            }
-            onAction={openAddBalanceModal}
+              title="Saldo e conta"
+              description={
+                accountDetails
+                  ? `${accountDetails.nickname}. Saldo atualizado em ${formatReferenceDate(
+                      accountDetails.referenceDate,
+                    )}.`
+                  : 'Informe o saldo atual e o tipo de conta que você possui nesta instituição.'
+              }
+              buttonLabel={
+                accountDetails
+                  ? 'Editar saldo'
+                  : 'Adicionar saldo'
+              }
+              onAction={
+                openAddBalanceModal
+              }
             />
 
             <EmptySection
@@ -331,11 +459,19 @@ export function BankDetailsPage() {
                 />
               }
               title="Recebimentos"
-              description="Informe salários, freelances ou outras entradas recebidas nesta instituição."
+              description={
+                incomeSources.length > 0
+                  ? `${incomeSources.length} ${
+                      incomeSources.length === 1
+                        ? 'fonte cadastrada'
+                        : 'fontes cadastradas'
+                    } nesta instituição.`
+                  : 'Informe salários, freelances ou outras entradas recebidas nesta instituição.'
+              }
               buttonLabel="Adicionar recebimento"
-              onAction={() => {
-                handleTemporaryAction('income')
-              }}
+              onAction={
+                openIncomeForm
+              }
             />
 
             <EmptySection
@@ -349,7 +485,9 @@ export function BankDetailsPage() {
               description="Cadastre apelido, limite, fechamento e vencimento dos seus cartões."
               buttonLabel="Adicionar cartão"
               onAction={() => {
-                handleTemporaryAction('cards')
+                handleTemporaryAction(
+                  'cards',
+                )
               }}
             />
 
@@ -364,7 +502,9 @@ export function BankDetailsPage() {
               description="Organize compras parceladas e acompanhe os próximos vencimentos."
               buttonLabel="Adicionar parcela"
               onAction={() => {
-                handleTemporaryAction('installments')
+                handleTemporaryAction(
+                  'installments',
+                )
               }}
             />
 
@@ -379,7 +519,9 @@ export function BankDetailsPage() {
               description="Registre os investimentos mantidos nesta instituição e seus valores atuais."
               buttonLabel="Adicionar investimento"
               onAction={() => {
-                handleTemporaryAction('investments')
+                handleTemporaryAction(
+                  'investments',
+                )
               }}
             />
           </div>
@@ -403,12 +545,34 @@ export function BankDetailsPage() {
             </p>
           </div>
         </aside>
+
         <AddBalanceModal
-          isOpen={isAddBalanceModalOpen}
+          isOpen={
+            isAddBalanceModalOpen
+          }
           bank={bank}
-          initialValues={accountDetails}
-          onClose={closeAddBalanceModal}
-          onSave={handleSaveBalance}
+          initialValues={
+            accountDetails
+          }
+          onClose={
+            closeAddBalanceModal
+          }
+          onSave={
+            handleSaveBalance
+          }
+        />
+
+        <IncomeForm
+          isOpen={
+            isIncomeFormOpen
+          }
+          bank={bank}
+          onClose={
+            closeIncomeForm
+          }
+          onSave={
+            handleSaveIncome
+          }
         />
       </div>
     </main>
