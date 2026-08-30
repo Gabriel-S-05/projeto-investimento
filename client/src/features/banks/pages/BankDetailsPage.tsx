@@ -27,6 +27,7 @@ import { BankCard } from '../components/BankCard/IndexBankCard'
 import { useBanks } from '../context/BanksContext'
 import { AddBalanceModal } from '../components/AddBalanceModal/IndexAddBalanceModal'
 import type { BankAccountDetails } from '../types/bank-details'
+import { useBankDetails } from '../context/BankDetailsContext'
 
 import styles from './BankDetailsPage.module.css'
 
@@ -42,6 +43,26 @@ interface EmptySectionProps {
   description: string
   buttonLabel: string
   onAction: () => void
+}
+
+function formatReferenceDate(
+  date: string,
+): string {
+  const [
+    year,
+    month,
+    day,
+  ] = date.split('-')
+
+  if (
+    !year ||
+    !month ||
+    !day
+  ) {
+    return date
+  }
+
+  return `${day}/${month}/${year}`
 }
 
 function EmptySection({
@@ -88,10 +109,14 @@ export function BankDetailsPage() {
 
   const { selectedBanks } = useBanks()
 
+  const {getAccountDetails, saveAccountDetails} = useBankDetails()
+
   const bank = selectedBanks.find(
     (selectedBank) =>
       selectedBank.value === bankId,
   )
+
+  const accountDetails = bankId ? getAccountDetails(bankId) : null
 
   const openAddBalanceModal =
   useCallback((): void => {
@@ -106,15 +131,16 @@ export function BankDetailsPage() {
   const handleSaveBalance =
     useCallback(
       (
-        accountDetails: BankAccountDetails,
+        updatedAccountDetails:
+          BankAccountDetails,
       ): void => {
-        console.log(
-          'Saldo informado apenas no frontend:',
-          accountDetails,
+        saveAccountDetails(
+          updatedAccountDetails,
         )
       },
-      [],
+      [saveAccountDetails],
     )
+
 
   if (!bankId || !bank) {
     return (
@@ -202,8 +228,24 @@ export function BankDetailsPage() {
             <div className={styles.summaryGrid}>
               <article className={styles.summaryItem}>
                 <span>Saldo atual</span>
-                <strong>Não informado</strong>
+
+                <strong>
+                  {accountDetails
+                    ? new Intl.NumberFormat(
+                        'pt-BR',
+                        {
+                          style: 'currency',
+                          currency: 'BRL',
+                        },
+                      ).format(
+                        accountDetails
+                          .currentBalanceInCents /
+                          100,
+                      )
+                    : 'Não informado'}
+                </strong>
               </article>
+
 
               <article className={styles.summaryItem}>
                 <span>Entradas mensais</span>
@@ -220,7 +262,6 @@ export function BankDetailsPage() {
                 <strong>Não informado</strong>
               </article>
             </div>
-
             <Button
               type="button"
               fullWidth
@@ -231,7 +272,9 @@ export function BankDetailsPage() {
                 aria-hidden="true"
               />
 
-              Adicionar saldo atual
+              {accountDetails
+                ? 'Editar saldo atual'
+                : 'Adicionar saldo atual'}
             </Button>
           </div>
         </section>
@@ -266,10 +309,18 @@ export function BankDetailsPage() {
                   aria-hidden="true"
                 />
               }
-              title="Saldo e conta"
-              description="Informe o saldo atual e o tipo de conta que você possui nesta instituição."
-              buttonLabel="Adicionar saldo"
-              onAction={openAddBalanceModal}
+            title="Saldo e conta"
+            description={
+              accountDetails
+                ? `${accountDetails.nickname}. Saldo atualizado em ${formatReferenceDate(accountDetails.referenceDate)}.`
+                : 'Informe o saldo atual e o tipo de conta que você possui nesta instituição.'
+            }
+            buttonLabel={
+              accountDetails
+                ? 'Editar saldo'
+                : 'Adicionar saldo'
+            }
+            onAction={openAddBalanceModal}
             />
 
             <EmptySection
@@ -355,6 +406,7 @@ export function BankDetailsPage() {
         <AddBalanceModal
           isOpen={isAddBalanceModalOpen}
           bank={bank}
+          initialValues={accountDetails}
           onClose={closeAddBalanceModal}
           onSave={handleSaveBalance}
         />

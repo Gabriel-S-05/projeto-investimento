@@ -40,6 +40,7 @@ interface AccountTypeOption {
 interface AddBalanceModalProps {
   isOpen: boolean
   bank: BankOption
+  initialValues?: BankAccountDetails | null
   onClose: () => void
   onSave: (
     accountDetails: BankAccountDetails,
@@ -334,9 +335,24 @@ function formatCurrencyInput(
   )
 }
 
+function formatCentsToCurrency(
+  valueInCents: number,
+): string {
+  return new Intl.NumberFormat(
+    'pt-BR',
+    {
+      style: 'currency',
+      currency: 'BRL',
+    },
+  ).format(
+    valueInCents / 100,
+  )
+}
+
 export function AddBalanceModal({
   isOpen,
   bank,
+  initialValues = null,
   onClose,
   onSave,
 }: AddBalanceModalProps) {
@@ -410,15 +426,37 @@ export function AddBalanceModal({
       return
     }
 
+    if (initialValues) {
+      reset({
+        accountType:
+          initialValues.accountType,
+
+        nickname:
+          initialValues.nickname,
+
+        balance:
+          formatCentsToCurrency(
+            initialValues.currentBalanceInCents,
+          ),
+
+        referenceDate:
+          initialValues.referenceDate,
+      })
+
+      return
+    }
+
     reset({
       accountType: '',
-      nickname:
-        'Conta principal',
+      nickname: 'Conta principal',
       balance: '',
-      referenceDate:
-        getCurrentDate(),
+      referenceDate: getCurrentDate(),
     })
-  }, [isOpen, reset])
+  }, [
+    initialValues,
+    isOpen,
+    reset,
+  ])
 
   if (!isOpen) {
     return null
@@ -513,12 +551,15 @@ export function AddBalanceModal({
 
             <div>
               <h2 id={titleId}>
-                Adicionar saldo
+                {initialValues
+                  ? 'Editar saldo'
+                  : 'Adicionar saldo'}
               </h2>
-
               <p id={descriptionId}>
-                Informe manualmente os
-                dados da sua conta no{' '}
+                {initialValues
+                  ? 'Atualize manualmente os dados da sua conta no '
+                  : 'Informe manualmente os dados da sua conta no '}
+
                 <strong>
                   {bank.label}
                 </strong>
@@ -810,16 +851,16 @@ export function AddBalanceModal({
 
             <Button
               type="submit"
-              isLoading={
-                isSubmitting
-              }
+              isLoading={isSubmitting}
             >
               <Save
                 size={18}
                 aria-hidden="true"
               />
 
-              Salvar saldo
+              {initialValues
+                ? 'Salvar alterações'
+                : 'Salvar saldo'}
             </Button>
           </footer>
         </form>

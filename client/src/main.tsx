@@ -7,6 +7,7 @@ import {
 import { RouterProvider } from 'react-router-dom'
 
 import { BanksProvider } from './features/banks/context/BanksContext'
+import { BankDetailsProvider } from './features/banks/context/BankDetailsContext'
 
 import { appRouter } from './routes/app-router'
 
@@ -34,9 +35,11 @@ createRoot(rootElement).render(
       client={queryClient}
     >
       <BanksProvider>
-        <RouterProvider
-          router={appRouter}
-        />
+        <BankDetailsProvider>
+          <RouterProvider
+            router={appRouter}
+          />
+        </BankDetailsProvider>
       </BanksProvider>
     </QueryClientProvider>
   </StrictMode>,
