@@ -1,28 +1,26 @@
-import type {
-  CSSProperties,
-} from 'react'
-
+import type { CSSProperties } from 'react'
 import {
   ArrowRight,
   Trash2,
   Wifi,
 } from 'lucide-react'
 
-import { bankIcons } from '../../data/bank-icons'
-import {
-  getBankTheme,
-} from '../../data/bank-themes'
 import type { BankOption } from '../../data/bank'
+import { bankIcons } from '../../data/bank-icons'
+import { getBankTheme } from '../../data/bank-themes'
 
 import styles from './BankCard.module.css'
 
 interface BankCardProps {
   bank: BankOption
   holderName?: string
-  onViewDetails: (
+  showRemoveButton?: boolean
+  showDetailsAction?: boolean
+  showStatus?: boolean
+  onViewDetails?: (
     bank: BankOption,
   ) => void
-  onRequestRemove: (
+  onRequestRemove?: (
     bank: BankOption,
   ) => void
 }
@@ -40,6 +38,9 @@ interface BankCardCssVariables
 export function BankCard({
   bank,
   holderName = 'Finance App',
+  showRemoveButton = true,
+  showDetailsAction = true,
+  showStatus = true,
   onViewDetails,
   onRequestRemove,
 }: BankCardProps) {
@@ -53,17 +54,42 @@ export function BankCard({
     BankCardCssVariables = {
       '--bank-background':
         theme.background,
+
       '--bank-foreground':
         theme.foreground,
+
       '--bank-muted-foreground':
         theme.mutedForeground,
+
       '--bank-accent':
         theme.accent,
+
       '--bank-chip':
         theme.chipBackground,
+
       '--bank-shadow':
         theme.shadow,
     }
+
+  const shouldShowRemoveButton =
+    showRemoveButton &&
+    Boolean(onRequestRemove)
+
+  const shouldShowDetailsAction =
+    showDetailsAction &&
+    Boolean(onViewDetails)
+
+  const shouldShowActions =
+    showStatus ||
+    shouldShowDetailsAction
+
+  function handleRemove(): void {
+    onRequestRemove?.(bank)
+  }
+
+  function handleViewDetails(): void {
+    onViewDetails?.(bank)
+  }
 
   return (
     <article
@@ -84,9 +110,7 @@ export function BankCard({
           }
         >
           <div
-            className={
-              styles.brand
-            }
+            className={styles.brand}
           >
             {BankIcon ? (
               <BankIcon
@@ -94,40 +118,37 @@ export function BankCard({
                   styles.logoIcon
                 }
                 size={34}
-                aria-label={
-                  bank.label
-                }
+                title={bank.label}
+                aria-hidden="true"
               />
             ) : (
               <span
                 className={
                   styles.logoFallback
                 }
-                aria-label={
-                  bank.label
-                }
+                title={bank.label}
               >
                 {bank.shortName}
               </span>
             )}
           </div>
 
-          <button
-            type="button"
-            className={
-              styles.removeButton
-            }
-            onClick={() => {
-              onRequestRemove(bank)
-            }}
-            aria-label={`Remover ${bank.label}`}
-            title={`Remover ${bank.label}`}
-          >
-            <Trash2
-              size={18}
-              aria-hidden="true"
-            />
-          </button>
+          {shouldShowRemoveButton ? (
+            <button
+              type="button"
+              className={
+                styles.removeButton
+              }
+              onClick={handleRemove}
+              aria-label={`Remover ${bank.label}`}
+              title={`Remover ${bank.label}`}
+            >
+              <Trash2
+                size={18}
+                aria-hidden="true"
+              />
+            </button>
+          ) : null}
         </header>
 
         <div
@@ -137,9 +158,7 @@ export function BankCard({
           aria-hidden="true"
         >
           <span
-            className={
-              styles.chip
-            }
+            className={styles.chip}
           >
             <span />
             <span />
@@ -179,9 +198,7 @@ export function BankCard({
           </div>
 
           <div
-            className={
-              styles.holder
-            }
+            className={styles.holder}
           >
             <span>
               Organizado por
@@ -204,40 +221,44 @@ export function BankCard({
         </div>
       </div>
 
-      <div
-        className={
-          styles.actions
-        }
-      >
-        <div>
-          <span
-            className={
-              styles.status
-            }
-          >
-            Dados ainda não
-            informados
-          </span>
-        </div>
-
-        <button
-          type="button"
-          className={
-            styles.detailsButton
-          }
-          onClick={() => {
-            onViewDetails(bank)
-          }}
-          aria-label={`Ver detalhes de ${bank.label}`}
+      {shouldShowActions ? (
+        <div
+          className={styles.actions}
         >
-          Ver detalhes
+          {showStatus ? (
+            <span
+              className={styles.status}
+            >
+              Dados ainda não informados
+            </span>
+          ) : (
+            <span
+              aria-hidden="true"
+            />
+          )}
 
-          <ArrowRight
-            size={18}
-            aria-hidden="true"
-          />
-        </button>
-      </div>
+          {shouldShowDetailsAction ? (
+            <button
+              type="button"
+              className={
+                styles.detailsButton
+              }
+              onClick={
+                handleViewDetails
+              }
+              aria-label={`Ver detalhes de ${bank.label}`}
+            >
+              Ver detalhes
+
+              <ArrowRight
+                size={18}
+                aria-hidden="true"
+              />
+            </button>
+          ) : null}
+        </div>
+      ) : null}
     </article>
   )
 }
+``

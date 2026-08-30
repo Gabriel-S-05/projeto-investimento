@@ -100,10 +100,6 @@
   min-width: 0;
 }
 
-.bankCardWrapper > article > div:last-child {
-  display: none;
-}
-
 .summary {
   display: grid;
   gap: 23px;

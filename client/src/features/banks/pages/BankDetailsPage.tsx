@@ -146,8 +146,9 @@ export function BankDetailsPage() {
             <BankCard
               bank={bank}
               holderName="Minha conta"
-              onViewDetails={() => undefined}
-              onRequestRemove={() => undefined}
+              showRemoveButton={false}
+              showDetailsAction={false}
+              showStatus={false}
             />
           </div>
 
