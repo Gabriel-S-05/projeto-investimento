@@ -1,4 +1,9 @@
-import type { ReactNode } from 'react'
+import {
+  useCallback,
+  useState,
+  type ReactNode,
+} from 'react'
+
 import {
   ArrowLeft,
   Banknote,
@@ -20,11 +25,12 @@ import { Button } from '../../../components/ui/Button/IndexButton'
 import { routePaths } from '../../../routes/route-paths'
 import { BankCard } from '../components/BankCard/IndexBankCard'
 import { useBanks } from '../context/BanksContext'
+import { AddBalanceModal } from '../components/AddBalanceModal/IndexAddBalanceModal'
+import type { BankAccountDetails } from '../types/bank-details'
 
 import styles from './BankDetailsPage.module.css'
 
 type DetailsSection =
-  | 'balance'
   | 'income'
   | 'cards'
   | 'installments'
@@ -74,6 +80,8 @@ function EmptySection({
 }
 
 export function BankDetailsPage() {
+  const [isAddBalanceModalOpen, setIsAddBalanceModalOpen] = useState(false)
+
   const { bankId } = useParams<{
     bankId: string
   }>()
@@ -84,6 +92,29 @@ export function BankDetailsPage() {
     (selectedBank) =>
       selectedBank.value === bankId,
   )
+
+  const openAddBalanceModal =
+  useCallback((): void => {
+    setIsAddBalanceModalOpen(true)
+  }, [])
+
+  const closeAddBalanceModal =
+    useCallback((): void => {
+      setIsAddBalanceModalOpen(false)
+    }, [])
+
+  const handleSaveBalance =
+    useCallback(
+      (
+        accountDetails: BankAccountDetails,
+      ): void => {
+        console.log(
+          'Saldo informado apenas no frontend:',
+          accountDetails,
+        )
+      },
+      [],
+    )
 
   if (!bankId || !bank) {
     return (
@@ -193,9 +224,7 @@ export function BankDetailsPage() {
             <Button
               type="button"
               fullWidth
-              onClick={() => {
-                handleTemporaryAction('balance')
-              }}
+              onClick={openAddBalanceModal}
             >
               <Plus
                 size={18}
@@ -240,9 +269,7 @@ export function BankDetailsPage() {
               title="Saldo e conta"
               description="Informe o saldo atual e o tipo de conta que você possui nesta instituição."
               buttonLabel="Adicionar saldo"
-              onAction={() => {
-                handleTemporaryAction('balance')
-              }}
+              onAction={openAddBalanceModal}
             />
 
             <EmptySection
@@ -325,6 +352,12 @@ export function BankDetailsPage() {
             </p>
           </div>
         </aside>
+        <AddBalanceModal
+          isOpen={isAddBalanceModalOpen}
+          bank={bank}
+          onClose={closeAddBalanceModal}
+          onSave={handleSaveBalance}
+        />
       </div>
     </main>
   )
