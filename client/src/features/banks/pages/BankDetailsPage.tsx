@@ -21,6 +21,10 @@ import {
 } from 'react-router-dom'
 
 import { Button } from '../../../components/ui/Button/IndexButton'
+import { routePaths } from '../../../routes/route-paths'
+import { CreditCardForm } from '../../cards/components/CreditCardForm/IndexCreditCardForm'
+import { useCreditCards } from '../../cards/context/CreditCardsContext'
+import type { CreditCardFormValues } from '../../cards/types/credit-card'
 import { IncomeForm } from '../../income/components/IncomeForm/IndexIncomeForm'
 import { useIncome } from '../../income/context/IncomeContext'
 import type { IncomeFormValues } from '../../income/types/income'
@@ -29,12 +33,10 @@ import { BankCard } from '../components/BankCard/IndexBankCard'
 import { useBankDetails } from '../context/BankDetailsContext'
 import { useBanks } from '../context/BanksContext'
 import type { BankAccountDetails } from '../types/bank-details'
-import { routePaths } from '../../../routes/route-paths'
 
 import styles from './BankDetailsPage.module.css'
 
 type DetailsSection =
-  | 'cards'
   | 'installments'
   | 'investments'
 
@@ -130,6 +132,11 @@ export function BankDetailsPage() {
     setIsIncomeFormOpen,
   ] = useState(false)
 
+  const [
+    isCreditCardFormOpen,
+    setIsCreditCardFormOpen,
+  ] = useState(false)
+
   const {
     bankId,
   } = useParams<{
@@ -150,6 +157,12 @@ export function BankDetailsPage() {
     getEstimatedMonthlyIncomeInCents,
     addIncomeSource,
   } = useIncome()
+
+  const {
+    getCreditCards,
+    getCurrentInvoiceInCents,
+    addCreditCard,
+  } = useCreditCards()
 
   const bank =
     selectedBanks.find(
@@ -178,6 +191,36 @@ export function BankDetailsPage() {
           bankId,
         )
       : 0
+
+  const creditCards =
+    bankId
+      ? getCreditCards(
+          bankId,
+        )
+      : []
+
+  const currentInvoiceInCents =
+    bankId
+      ? getCurrentInvoiceInCents(
+          bankId,
+        )
+      : 0
+
+  const hasCreditCard =
+    creditCards.some(
+      (card) =>
+        card.type === 'credit' ||
+        card.type === 'multiple',
+    )
+
+  const creditCardsDescription =
+    creditCards.length > 0
+      ? `${creditCards.length} ${
+          creditCards.length === 1
+            ? 'cartão cadastrado'
+            : 'cartões cadastrados'
+        } nesta instituição.`
+      : 'Cadastre apelido, limite, fechamento e vencimento dos seus cartões.'
 
   const openAddBalanceModal =
     useCallback((): void => {
@@ -239,6 +282,41 @@ export function BankDetailsPage() {
       },
       [
         addIncomeSource,
+        bankId,
+      ],
+    )
+
+  const openCreditCardForm =
+    useCallback((): void => {
+      setIsCreditCardFormOpen(
+        true,
+      )
+    }, [])
+
+  const closeCreditCardForm =
+    useCallback((): void => {
+      setIsCreditCardFormOpen(
+        false,
+      )
+    }, [])
+
+  const handleSaveCreditCard =
+    useCallback(
+      (
+        values:
+          CreditCardFormValues,
+      ): void => {
+        if (!bankId) {
+          return
+        }
+
+        addCreditCard(
+          bankId,
+          values,
+        )
+      },
+      [
+        addCreditCard,
         bankId,
       ],
     )
@@ -369,7 +447,11 @@ export function BankDetailsPage() {
                 </span>
 
                 <strong>
-                  Não informado
+                  {hasCreditCard
+                    ? formatCurrency(
+                        currentInvoiceInCents,
+                      )
+                    : 'Não informado'}
                 </strong>
               </article>
 
@@ -482,13 +564,13 @@ export function BankDetailsPage() {
                 />
               }
               title="Cartões"
-              description="Cadastre apelido, limite, fechamento e vencimento dos seus cartões."
+              description={
+                creditCardsDescription
+              }
               buttonLabel="Adicionar cartão"
-              onAction={() => {
-                handleTemporaryAction(
-                  'cards',
-                )
-              }}
+              onAction={
+                openCreditCardForm
+              }
             />
 
             <EmptySection
@@ -572,6 +654,19 @@ export function BankDetailsPage() {
           }
           onSave={
             handleSaveIncome
+          }
+        />
+
+        <CreditCardForm
+          isOpen={
+            isCreditCardFormOpen
+          }
+          bank={bank}
+          onClose={
+            closeCreditCardForm
+          }
+          onSave={
+            handleSaveCreditCard
           }
         />
       </div>
