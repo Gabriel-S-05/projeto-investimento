@@ -28,6 +28,9 @@ import type { CreditCardFormValues } from '../../cards/types/credit-card'
 import { IncomeForm } from '../../income/components/IncomeForm/IndexIncomeForm'
 import { useIncome } from '../../income/context/IncomeContext'
 import type { IncomeFormValues } from '../../income/types/income'
+import { InstallmentForm } from '../../installments/components/InstallmentForm/IndexInstallmentForm'
+import { useInstallments } from '../../installments/context/InstallmentsContext'
+import type { InstallmentFormValues } from '../../installments/types/installment'
 import { AddBalanceModal } from '../components/AddBalanceModal/IndexAddBalanceModal'
 import { BankCard } from '../components/BankCard/IndexBankCard'
 import { useBankDetails } from '../context/BankDetailsContext'
@@ -35,10 +38,6 @@ import { useBanks } from '../context/BanksContext'
 import type { BankAccountDetails } from '../types/bank-details'
 
 import styles from './BankDetailsPage.module.css'
-
-type DetailsSection =
-  | 'installments'
-  | 'investments'
 
 interface EmptySectionProps {
   icon: ReactNode
@@ -137,6 +136,11 @@ export function BankDetailsPage() {
     setIsCreditCardFormOpen,
   ] = useState(false)
 
+  const [
+    isInstallmentFormOpen,
+    setIsInstallmentFormOpen,
+  ] = useState(false)
+
   const {
     bankId,
   } = useParams<{
@@ -163,6 +167,12 @@ export function BankDetailsPage() {
     getCurrentInvoiceInCents,
     addCreditCard,
   } = useCreditCards()
+
+  const {
+    getInstallments,
+    getMonthlyCommitmentInCents,
+    addInstallment,
+  } = useInstallments()
 
   const bank =
     selectedBanks.find(
@@ -206,6 +216,27 @@ export function BankDetailsPage() {
         )
       : 0
 
+  const installments =
+    bankId
+      ? getInstallments(
+          bankId,
+        )
+      : []
+
+  const monthlyInstallmentCommitmentInCents =
+    bankId
+      ? getMonthlyCommitmentInCents(
+          bankId,
+        )
+      : 0
+
+  const activeInstallments =
+    installments.filter(
+      (installment) =>
+        installment.status ===
+        'active',
+    )
+
   const hasCreditCard =
     creditCards.some(
       (card) =>
@@ -221,6 +252,23 @@ export function BankDetailsPage() {
             : 'cartões cadastrados'
         } nesta instituição.`
       : 'Cadastre apelido, limite, fechamento e vencimento dos seus cartões.'
+
+  const installmentsDescription =
+    installments.length === 0
+      ? 'Organize compras parceladas e acompanhe os próximos vencimentos.'
+      : activeInstallments.length > 0
+        ? `${installments.length} ${
+            installments.length === 1
+              ? 'compra parcelada cadastrada'
+              : 'compras parceladas cadastradas'
+          }. Compromisso mensal estimado: ${formatCurrency(
+            monthlyInstallmentCommitmentInCents,
+          )}.`
+        : `${installments.length} ${
+            installments.length === 1
+              ? 'compra parcelada cadastrada'
+              : 'compras parceladas cadastradas'
+          }, sem parcelamentos ativos no momento.`
 
   const openAddBalanceModal =
     useCallback((): void => {
@@ -321,6 +369,41 @@ export function BankDetailsPage() {
       ],
     )
 
+  const openInstallmentForm =
+    useCallback((): void => {
+      setIsInstallmentFormOpen(
+        true,
+      )
+    }, [])
+
+  const closeInstallmentForm =
+    useCallback((): void => {
+      setIsInstallmentFormOpen(
+        false,
+      )
+    }, [])
+
+  const handleSaveInstallment =
+    useCallback(
+      (
+        values:
+          InstallmentFormValues,
+      ): void => {
+        if (!bankId) {
+          return
+        }
+
+        addInstallment(
+          bankId,
+          values,
+        )
+      },
+      [
+        addInstallment,
+        bankId,
+      ],
+    )
+
   if (
     !bankId ||
     !bank
@@ -333,14 +416,12 @@ export function BankDetailsPage() {
     )
   }
 
-  function handleTemporaryAction(
-    section: DetailsSection,
-  ): void {
+  function handleInvestmentsAction(): void {
     console.log(
       'Ação visual da instituição:',
       {
         bankId,
-        section,
+        section: 'investments',
       },
     )
   }
@@ -567,7 +648,11 @@ export function BankDetailsPage() {
               description={
                 creditCardsDescription
               }
-              buttonLabel="Adicionar cartão"
+              buttonLabel={
+                creditCards.length > 0
+                  ? 'Adicionar outro cartão'
+                  : 'Adicionar cartão'
+              }
               onAction={
                 openCreditCardForm
               }
@@ -581,15 +666,18 @@ export function BankDetailsPage() {
                 />
               }
               title="Parcelas"
-              description="Organize compras parceladas e acompanhe os próximos vencimentos."
-              buttonLabel="Adicionar parcela"
-              onAction={() => {
-                handleTemporaryAction(
-                  'installments',
-                )
-              }}
+              description={
+                installmentsDescription
+              }
+              buttonLabel={
+                installments.length > 0
+                  ? 'Adicionar outra parcela'
+                  : 'Adicionar parcela'
+              }
+              onAction={
+                openInstallmentForm
+              }
             />
-
             <EmptySection
               icon={
                 <ChartLine
@@ -600,11 +688,9 @@ export function BankDetailsPage() {
               title="Investimentos"
               description="Registre os investimentos mantidos nesta instituição e seus valores atuais."
               buttonLabel="Adicionar investimento"
-              onAction={() => {
-                handleTemporaryAction(
-                  'investments',
-                )
-              }}
+              onAction={
+                handleInvestmentsAction
+              }
             />
           </div>
         </section>
@@ -667,6 +753,22 @@ export function BankDetailsPage() {
           }
           onSave={
             handleSaveCreditCard
+          }
+        />
+
+        <InstallmentForm
+          isOpen={
+            isInstallmentFormOpen
+          }
+          bank={bank}
+          creditCards={
+            creditCards
+          }
+          onClose={
+            closeInstallmentForm
+          }
+          onSave={
+            handleSaveInstallment
           }
         />
       </div>

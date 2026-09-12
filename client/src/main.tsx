@@ -10,22 +10,27 @@ import { BankDetailsProvider } from './features/banks/context/BankDetailsContext
 import { BanksProvider } from './features/banks/context/BanksContext'
 import { CreditCardsProvider } from './features/cards/context/CreditCardsContext'
 import { IncomeProvider } from './features/income/context/IncomeContext'
+import { InstallmentsProvider } from './features/installments/context/InstallmentsContext'
 import { appRouter } from './routes/app-router'
 
 import './styles/global.css'
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-      staleTime: 30_000,
+const queryClient =
+  new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: 1,
+        refetchOnWindowFocus:
+          false,
+        staleTime: 30_000,
+      },
     },
-  },
-})
+  })
 
 const rootElement =
-  document.getElementById('root')
+  document.getElementById(
+    'root',
+  )
 
 if (!rootElement) {
   throw new Error(
@@ -35,12 +40,18 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
+    <QueryClientProvider
+      client={queryClient}
+    >
       <BanksProvider>
         <BankDetailsProvider>
           <IncomeProvider>
             <CreditCardsProvider>
-              <RouterProvider router={appRouter} />
+              <InstallmentsProvider>
+                <RouterProvider
+                  router={appRouter}
+                />
+              </InstallmentsProvider>
             </CreditCardsProvider>
           </IncomeProvider>
         </BankDetailsProvider>
