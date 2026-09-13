@@ -31,6 +31,9 @@ import type { IncomeFormValues } from '../../income/types/income'
 import { InstallmentForm } from '../../installments/components/InstallmentForm/IndexInstallmentForm'
 import { useInstallments } from '../../installments/context/InstallmentsContext'
 import type { InstallmentFormValues } from '../../installments/types/installment'
+import { InvestmentForm } from '../../investments/components/InvestmentForm/IndexInvestForm'
+import { useInvestments } from '../../investments/context/InvestmentsContext'
+import type { InvestmentFormValues } from '../../investments/types/investment'
 import { AddBalanceModal } from '../components/AddBalanceModal/IndexAddBalanceModal'
 import { BankCard } from '../components/BankCard/IndexBankCard'
 import { useBankDetails } from '../context/BankDetailsContext'
@@ -79,6 +82,33 @@ function formatCurrency(
   ).format(
     valueInCents / 100,
   )
+}
+
+function formatSignedCurrency(
+  valueInCents: number,
+): string {
+  const formattedValue =
+    formatCurrency(
+      valueInCents,
+    )
+
+  if (valueInCents > 0) {
+    return `+${formattedValue}`
+  }
+
+  return formattedValue
+}
+
+function formatPercentage(
+  value: number,
+): string {
+  return new Intl.NumberFormat(
+    'pt-BR',
+    {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    },
+  ).format(value)
 }
 
 function EmptySection({
@@ -141,6 +171,11 @@ export function BankDetailsPage() {
     setIsInstallmentFormOpen,
   ] = useState(false)
 
+  const [
+    isInvestmentFormOpen,
+    setIsInvestmentFormOpen,
+  ] = useState(false)
+
   const {
     bankId,
   } = useParams<{
@@ -173,6 +208,14 @@ export function BankDetailsPage() {
     getMonthlyCommitmentInCents,
     addInstallment,
   } = useInstallments()
+
+  const {
+    getInvestments,
+    getActiveInvestments,
+    getTotalCurrentAmountInCents,
+    getInvestmentSummary,
+    addInvestment,
+  } = useInvestments()
 
   const bank =
     selectedBanks.find(
@@ -237,6 +280,46 @@ export function BankDetailsPage() {
         'active',
     )
 
+  const investments =
+    bankId
+      ? getInvestments(
+          bankId,
+        )
+      : []
+
+  const activeInvestments =
+    bankId
+      ? getActiveInvestments(
+          bankId,
+        )
+      : []
+
+  const totalCurrentInvestmentInCents =
+    bankId
+      ? getTotalCurrentAmountInCents(
+          bankId,
+        )
+      : 0
+
+  const investmentSummary =
+    bankId
+      ? getInvestmentSummary(
+          bankId,
+        )
+      : {
+          investedAmountInCents:
+            0,
+
+          currentAmountInCents:
+            0,
+
+          resultInCents:
+            0,
+
+          returnPercentage:
+            0,
+        }
+
   const hasCreditCard =
     creditCards.some(
       (card) =>
@@ -269,6 +352,30 @@ export function BankDetailsPage() {
               ? 'compra parcelada cadastrada'
               : 'compras parceladas cadastradas'
           }, sem parcelamentos ativos no momento.`
+
+  const investmentsDescription =
+    investments.length === 0
+      ? 'Registre os investimentos mantidos nesta instituição e seus valores atuais.'
+      : activeInvestments.length === 0
+        ? `${investments.length} ${
+            investments.length === 1
+              ? 'investimento cadastrado'
+              : 'investimentos cadastrados'
+          }, sem investimentos ativos no momento.`
+        : `${investments.length} ${
+            investments.length === 1
+              ? 'investimento cadastrado'
+              : 'investimentos cadastrados'
+          }. Aplicado: ${formatCurrency(
+            investmentSummary
+              .investedAmountInCents,
+          )}. Resultado: ${formatSignedCurrency(
+            investmentSummary
+              .resultInCents,
+          )} (${formatPercentage(
+            investmentSummary
+              .returnPercentage,
+          )}%).`
 
   const openAddBalanceModal =
     useCallback((): void => {
@@ -404,6 +511,41 @@ export function BankDetailsPage() {
       ],
     )
 
+  const openInvestmentForm =
+    useCallback((): void => {
+      setIsInvestmentFormOpen(
+        true,
+      )
+    }, [])
+
+  const closeInvestmentForm =
+    useCallback((): void => {
+      setIsInvestmentFormOpen(
+        false,
+      )
+    }, [])
+
+  const handleSaveInvestment =
+    useCallback(
+      (
+        values:
+          InvestmentFormValues,
+      ): void => {
+        if (!bankId) {
+          return
+        }
+
+        addInvestment(
+          bankId,
+          values,
+        )
+      },
+      [
+        addInvestment,
+        bankId,
+      ],
+    )
+
   if (
     !bankId ||
     !bank
@@ -413,16 +555,6 @@ export function BankDetailsPage() {
         to={routePaths.banks}
         replace
       />
-    )
-  }
-
-  function handleInvestmentsAction(): void {
-    console.log(
-      'Ação visual da instituição:',
-      {
-        bankId,
-        section: 'investments',
-      },
     )
   }
 
@@ -542,7 +674,11 @@ export function BankDetailsPage() {
                 </span>
 
                 <strong>
-                  Não informado
+                  {activeInvestments.length > 0
+                    ? formatCurrency(
+                        totalCurrentInvestmentInCents,
+                      )
+                    : 'Não informado'}
                 </strong>
               </article>
             </div>
@@ -600,7 +736,8 @@ export function BankDetailsPage() {
               description={
                 accountDetails
                   ? `${accountDetails.nickname}. Saldo atualizado em ${formatReferenceDate(
-                      accountDetails.referenceDate,
+                      accountDetails
+                        .referenceDate,
                     )}.`
                   : 'Informe o saldo atual e o tipo de conta que você possui nesta instituição.'
               }
@@ -678,6 +815,7 @@ export function BankDetailsPage() {
                 openInstallmentForm
               }
             />
+
             <EmptySection
               icon={
                 <ChartLine
@@ -686,10 +824,16 @@ export function BankDetailsPage() {
                 />
               }
               title="Investimentos"
-              description="Registre os investimentos mantidos nesta instituição e seus valores atuais."
-              buttonLabel="Adicionar investimento"
+              description={
+                investmentsDescription
+              }
+              buttonLabel={
+                investments.length > 0
+                  ? 'Adicionar outro investimento'
+                  : 'Adicionar investimento'
+              }
               onAction={
-                handleInvestmentsAction
+                openInvestmentForm
               }
             />
           </div>
@@ -769,6 +913,19 @@ export function BankDetailsPage() {
           }
           onSave={
             handleSaveInstallment
+          }
+        />
+
+        <InvestmentForm
+          isOpen={
+            isInvestmentFormOpen
+          }
+          bank={bank}
+          onClose={
+            closeInvestmentForm
+          }
+          onSave={
+            handleSaveInvestment
           }
         />
       </div>

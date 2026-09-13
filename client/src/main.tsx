@@ -11,6 +11,7 @@ import { BanksProvider } from './features/banks/context/BanksContext'
 import { CreditCardsProvider } from './features/cards/context/CreditCardsContext'
 import { IncomeProvider } from './features/income/context/IncomeContext'
 import { InstallmentsProvider } from './features/installments/context/InstallmentsContext'
+import { InvestmentsProvider } from './features/investments/context/InvestmentsContext'
 import { appRouter } from './routes/app-router'
 
 import './styles/global.css'
@@ -38,7 +39,9 @@ if (!rootElement) {
   )
 }
 
-createRoot(rootElement).render(
+createRoot(
+  rootElement,
+).render(
   <StrictMode>
     <QueryClientProvider
       client={queryClient}
@@ -48,9 +51,11 @@ createRoot(rootElement).render(
           <IncomeProvider>
             <CreditCardsProvider>
               <InstallmentsProvider>
-                <RouterProvider
-                  router={appRouter}
-                />
+                <InvestmentsProvider>
+                  <RouterProvider
+                    router={appRouter}
+                  />
+                </InvestmentsProvider>
               </InstallmentsProvider>
             </CreditCardsProvider>
           </IncomeProvider>
