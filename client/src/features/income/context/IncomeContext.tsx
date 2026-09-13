@@ -25,6 +25,11 @@ interface IncomeContextValue {
     bankId: string,
   ) => IncomeSource[]
 
+  getIncomeSourceById: (
+    bankId: string,
+    incomeId: string,
+  ) => IncomeSource | null
+
   getEstimatedMonthlyIncomeInCents: (
     bankId: string,
   ) => number
@@ -34,9 +39,19 @@ interface IncomeContextValue {
     values: IncomeFormValues,
   ) => IncomeSource
 
+  updateIncomeSource: (
+    bankId: string,
+    incomeId: string,
+    values: IncomeFormValues,
+  ) => void
+
   removeIncomeSource: (
     bankId: string,
     incomeId: string,
+  ) => void
+
+  removeIncomeSourcesByBank: (
+    bankId: string,
   ) => void
 }
 
@@ -45,37 +60,80 @@ interface IncomeProviderProps {
 }
 
 const IncomeContext =
-  createContext<IncomeContextValue | null>(
-    null,
-  )
+  createContext<
+    IncomeContextValue | null
+  >(null)
 
 function createIncomeId(): string {
   if (
     typeof crypto !== 'undefined' &&
-    'randomUUID' in crypto
+    typeof crypto.randomUUID ===
+      'function'
   ) {
     return crypto.randomUUID()
   }
 
-  return `income-${Date.now()}-${Math.random()
-    .toString(16)
-    .slice(2)}`
+  return [
+    'income',
+    Date.now(),
+    Math.random()
+      .toString(16)
+      .slice(2),
+  ].join('-')
+}
+
+function normalizeAmountInCents(
+  value: number,
+): number {
+  if (!Number.isFinite(value)) {
+    return 0
+  }
+
+  return Math.max(
+    0,
+    Math.round(value),
+  )
+}
+
+function normalizePaymentDay(
+  value: number | null,
+  frequency:
+    IncomeFormValues['frequency'],
+): number | null {
+  if (
+    frequency !== 'monthly' ||
+    value === null ||
+    !Number.isInteger(value) ||
+    value < 1 ||
+    value > 31
+  ) {
+    return null
+  }
+
+  return value
 }
 
 function calculateMonthlyValue(
-  income: IncomeSource,
+  incomeSource: IncomeSource,
 ): number {
-  switch (income.frequency) {
+  switch (
+    incomeSource.frequency
+  ) {
+    case 'monthly':
+      return incomeSource
+        .amountInCents
+
     case 'weekly':
       return Math.round(
-        income.amountInCents * 4.33,
+        incomeSource
+          .amountInCents * 4.33,
       )
 
     case 'biweekly':
-      return income.amountInCents * 2
-
-    case 'monthly':
-      return income.amountInCents
+      return (
+        incomeSource
+          .amountInCents * 2
+      )
 
     case 'variable':
     case 'one-time':
@@ -92,9 +150,9 @@ export function IncomeProvider({
   const [
     incomeSourcesByBankId,
     setIncomeSourcesByBankId,
-  ] = useState<IncomeSourcesByBankId>(
-    {},
-  )
+  ] = useState<
+    IncomeSourcesByBankId
+  >({})
 
   const getIncomeSources =
     useCallback(
@@ -107,7 +165,33 @@ export function IncomeProvider({
           ] ?? []
         )
       },
-      [incomeSourcesByBankId],
+      [
+        incomeSourcesByBankId,
+      ],
+    )
+
+  const getIncomeSourceById =
+    useCallback(
+      (
+        bankId: string,
+        incomeId: string,
+      ): IncomeSource | null => {
+        const incomeSources =
+          incomeSourcesByBankId[
+            bankId
+          ] ?? []
+
+        return (
+          incomeSources.find(
+            (incomeSource) =>
+              incomeSource.id ===
+              incomeId,
+          ) ?? null
+        )
+      },
+      [
+        incomeSourcesByBankId,
+      ],
     )
 
   const getEstimatedMonthlyIncomeInCents =
@@ -123,53 +207,81 @@ export function IncomeProvider({
         return incomeSources.reduce(
           (
             total,
-            income,
-          ) =>
-            total +
-            calculateMonthlyValue(
-              income,
-            ),
+            incomeSource,
+          ) => {
+            return (
+              total +
+              calculateMonthlyValue(
+                incomeSource,
+              )
+            )
+          },
           0,
         )
       },
-      [incomeSourcesByBankId],
+      [
+        incomeSourcesByBankId,
+      ],
     )
 
   const addIncomeSource =
     useCallback(
       (
         bankId: string,
-        values: IncomeFormValues,
+        values:
+          IncomeFormValues,
       ): IncomeSource => {
         const currentDate =
           new Date().toISOString()
 
         const incomeSource:
           IncomeSource = {
-            id: createIncomeId(),
+            id:
+              createIncomeId(),
+
             bankId,
+
             description:
-              values.description,
-            type: values.type,
+              values.description
+                .trim(),
+
+            type:
+              values.type,
+
             amountInCents:
-              values.amountInCents,
+              normalizeAmountInCents(
+                values.amountInCents,
+              ),
+
             frequency:
               values.frequency,
+
             paymentDay:
-              values.paymentDay,
+              normalizePaymentDay(
+                values.paymentDay,
+                values.frequency,
+              ),
+
             isVariableAmount:
               values.isVariableAmount,
-            createdAt: currentDate,
-            updatedAt: currentDate,
+
+            createdAt:
+              currentDate,
+
+            updatedAt:
+              currentDate,
           }
 
         setIncomeSourcesByBankId(
-          (currentSources) => ({
-            ...currentSources,
+          (
+            currentIncomeSources,
+          ) => ({
+            ...currentIncomeSources,
+            [bankId]:
 
-            [bankId]: [
+            [
               ...(
-                currentSources[
+                currentIncomeSources[
                   bankId
                 ] ?? []
               ),
@@ -183,6 +295,79 @@ export function IncomeProvider({
       [],
     )
 
+  const updateIncomeSource =
+    useCallback(
+      (
+        bankId: string,
+        incomeId: string,
+        values:
+          IncomeFormValues,
+      ): void => {
+        setIncomeSourcesByBankId(
+          (
+            currentIncomeSources,
+          ) => {
+            const bankIncomeSources =
+              currentIncomeSources[
+                bankId
+              ] ?? []
+
+            const updatedIncomeSources =
+              bankIncomeSources.map(
+                (incomeSource) => {
+                  if (
+                    incomeSource.id !==
+                    incomeId
+                  ) {
+                    return incomeSource
+                  }
+
+                  return {
+                    ...incomeSource,
+
+                    description:
+                      values.description
+                        .trim(),
+
+                    type:
+                      values.type,
+
+                    amountInCents:
+                      normalizeAmountInCents(
+                        values
+                          .amountInCents,
+                      ),
+
+                    frequency:
+                      values.frequency,
+
+                    paymentDay:
+                      normalizePaymentDay(
+                        values.paymentDay,
+                        values.frequency,
+                      ),
+
+                    isVariableAmount:
+                      values
+                        .isVariableAmount,
+
+                    updatedAt:
+                      new Date()
+                        .toISOString(),
+                  }
+                },
+              )
+
+            return {
+              ...currentIncomeSources,
+              [bankId]: updatedIncomeSources,
+            }
+          },
+        )
+      },
+      [],
+    )
+
   const removeIncomeSource =
     useCallback(
       (
@@ -190,40 +375,99 @@ export function IncomeProvider({
         incomeId: string,
       ): void => {
         setIncomeSourcesByBankId(
-          (currentSources) => ({
-            ...currentSources,
-            [bankId]:
+          (
+            currentIncomeSources,
+          ) => {
+            const updatedIncomeSources =
+              (
+                currentIncomeSources[
+                  bankId
+                ] ?? []
+              ).filter(
+                (incomeSource) =>
+                  incomeSource.id !==
+                  incomeId,
+              )
 
-            (
-              currentSources[
+            if (
+              updatedIncomeSources.length ===
+              0
+            ) {
+              const nextIncomeSources = {
+                ...currentIncomeSources,
+              }
+
+              delete nextIncomeSources[
                 bankId
-              ] ?? []
-            ).filter(
-              (incomeSource) =>
-                incomeSource.id !==
-                incomeId,
-            ),
-          }),
+              ]
+
+              return nextIncomeSources
+            }
+
+            return {
+              ...currentIncomeSources,
+              [bankId]: updatedIncomeSources,
+            }
+          },
+        )
+      },
+      [],
+    )
+  const removeIncomeSourcesByBank =
+    useCallback(
+      (
+        bankId: string,
+      ): void => {
+        setIncomeSourcesByBankId(
+          (
+            currentIncomeSources,
+          ) => {
+            if (
+              !currentIncomeSources[
+                bankId
+              ]
+            ) {
+              return currentIncomeSources
+            }
+
+            const nextIncomeSources = {
+              ...currentIncomeSources,
+            }
+
+            delete nextIncomeSources[
+              bankId
+            ]
+
+            return nextIncomeSources
+          },
         )
       },
       [],
     )
 
   const contextValue =
-    useMemo<IncomeContextValue>(
+    useMemo<
+      IncomeContextValue
+    >(
       () => ({
         incomeSourcesByBankId,
         getIncomeSources,
+        getIncomeSourceById,
         getEstimatedMonthlyIncomeInCents,
         addIncomeSource,
+        updateIncomeSource,
         removeIncomeSource,
+        removeIncomeSourcesByBank,
       }),
       [
         incomeSourcesByBankId,
         getIncomeSources,
+        getIncomeSourceById,
         getEstimatedMonthlyIncomeInCents,
         addIncomeSource,
+        updateIncomeSource,
         removeIncomeSource,
+        removeIncomeSourcesByBank,
       ],
     )
 
@@ -239,7 +483,9 @@ export function IncomeProvider({
 export function useIncome():
   IncomeContextValue {
   const context =
-    useContext(IncomeContext)
+    useContext(
+      IncomeContext,
+    )
 
   if (!context) {
     throw new Error(
