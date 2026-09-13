@@ -27,6 +27,7 @@ import {
   incomeTypes,
   type IncomeFormValues,
   type IncomeFrequency,
+  type IncomeSource,
   type IncomeType,
 } from '../../types/income'
 
@@ -40,6 +41,7 @@ interface SelectOption<TValue extends string> {
 interface IncomeFormProps {
   isOpen: boolean
   bank: BankOption
+  initialValues?: IncomeSource | null
   onClose: () => void
   onSave: (
     values: IncomeFormValues,
@@ -78,6 +80,20 @@ function formatCurrencyInput(
       currency: 'BRL',
     },
   ).format(Number(digits) / 100)
+}
+
+function formatCentsToCurrency(
+  valueInCents: number,
+): string {
+  return new Intl.NumberFormat(
+    'pt-BR',
+    {
+      style: 'currency',
+      currency: 'BRL',
+    },
+  ).format(
+    valueInCents / 100,
+  )
 }
 
 const incomeSchema = z
@@ -344,6 +360,7 @@ const frequencySelectStyles =
 export function IncomeForm({
   isOpen,
   bank,
+  initialValues = null,
   onClose,
   onSave,
 }: IncomeFormProps) {
@@ -422,6 +439,37 @@ export function IncomeForm({
       return
     }
 
+    if (initialValues) {
+      reset({
+        description:
+          initialValues.description,
+
+        type:
+          initialValues.type,
+
+        amount:
+          formatCentsToCurrency(
+            initialValues.amountInCents,
+          ),
+
+        frequency:
+          initialValues.frequency,
+
+        paymentDay:
+          initialValues.paymentDay !==
+          null
+            ? String(
+                initialValues.paymentDay,
+              )
+            : '',
+
+        isVariableAmount:
+          initialValues.isVariableAmount,
+      })
+
+      return
+    }
+
     reset({
       description: 'Salário',
       type: 'salary',
@@ -431,6 +479,7 @@ export function IncomeForm({
       isVariableAmount: false,
     })
   }, [
+    initialValues,
     isOpen,
     reset,
   ])
@@ -528,12 +577,16 @@ export function IncomeForm({
 
             <div>
               <h2 id={titleId}>
-                Adicionar recebimento
+                {initialValues
+                  ? 'Editar recebimento'
+                  : 'Adicionar recebimento'}
               </h2>
 
               <p id={descriptionId}>
-                Cadastre uma entrada
-                recebida no{' '}
+                {initialValues
+                  ? 'Atualize os dados da entrada recebida no '
+                  : 'Cadastre uma entrada recebida no '}
+
                 <strong>
                   {bank.label}
                 </strong>
@@ -873,7 +926,9 @@ export function IncomeForm({
                 aria-hidden="true"
               />
 
-              Salvar recebimento
+              {initialValues
+                ? 'Salvar alterações'
+                : 'Salvar recebimento'}
             </Button>
           </footer>
         </form>
