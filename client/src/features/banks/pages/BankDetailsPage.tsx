@@ -26,8 +26,9 @@ import { CreditCardForm } from '../../cards/components/CreditCardForm/IndexCredi
 import { useCreditCards } from '../../cards/context/CreditCardsContext'
 import type { CreditCardFormValues } from '../../cards/types/credit-card'
 import { IncomeForm } from '../../income/components/IncomeForm/IndexIncomeForm'
+import { IncomeSourcesList } from '../../income/components/IncomeSourceList/IndexIncomeSourceList'
 import { useIncome } from '../../income/context/IncomeContext'
-import type { IncomeFormValues } from '../../income/types/income'
+import type { IncomeFormValues, IncomeSource } from '../../income/types/income'
 import { InstallmentForm } from '../../installments/components/InstallmentForm/IndexInstallmentForm'
 import { useInstallments } from '../../installments/context/InstallmentsContext'
 import type { InstallmentFormValues } from '../../installments/types/installment'
@@ -162,6 +163,13 @@ export function BankDetailsPage() {
   ] = useState(false)
 
   const [
+    selectedIncomeSource,
+    setSelectedIncomeSource,
+  ] = useState<IncomeSource | null>(
+    null,
+  )
+
+  const [
     isCreditCardFormOpen,
     setIsCreditCardFormOpen,
   ] = useState(false)
@@ -195,6 +203,8 @@ export function BankDetailsPage() {
     getIncomeSources,
     getEstimatedMonthlyIncomeInCents,
     addIncomeSource,
+    updateIncomeSource,
+    removeIncomeSource,
   } = useIncome()
 
   const {
@@ -307,17 +317,10 @@ export function BankDetailsPage() {
           bankId,
         )
       : {
-          investedAmountInCents:
-            0,
-
-          currentAmountInCents:
-            0,
-
-          resultInCents:
-            0,
-
-          returnPercentage:
-            0,
+          investedAmountInCents: 0,
+          currentAmountInCents: 0,
+          resultInCents: 0,
+          returnPercentage: 0,
         }
 
   const hasCreditCard =
@@ -408,6 +411,10 @@ export function BankDetailsPage() {
 
   const openIncomeForm =
     useCallback((): void => {
+      setSelectedIncomeSource(
+        null,
+      )
+
       setIsIncomeFormOpen(
         true,
       )
@@ -418,7 +425,72 @@ export function BankDetailsPage() {
       setIsIncomeFormOpen(
         false,
       )
+
+      setSelectedIncomeSource(
+        null,
+      )
     }, [])
+
+  const handleEditIncome =
+    useCallback(
+      (
+        incomeSource:
+          IncomeSource,
+      ): void => {
+        setSelectedIncomeSource(
+          incomeSource,
+        )
+
+        setIsIncomeFormOpen(
+          true,
+        )
+      },
+      [],
+    )
+
+  const handleRemoveIncome =
+    useCallback(
+      (
+        incomeSource:
+          IncomeSource,
+      ): void => {
+        if (!bankId) {
+          return
+        }
+
+        const shouldRemove =
+          window.confirm(
+            `Deseja remover o recebimento "${incomeSource.description}"?`,
+          )
+
+        if (!shouldRemove) {
+          return
+        }
+
+        removeIncomeSource(
+          bankId,
+          incomeSource.id,
+        )
+
+        if (
+          selectedIncomeSource?.id ===
+          incomeSource.id
+        ) {
+          setSelectedIncomeSource(
+            null,
+          )
+
+          setIsIncomeFormOpen(
+            false,
+          )
+        }
+      },
+      [
+        bankId,
+        removeIncomeSource,
+        selectedIncomeSource,
+      ],
+    )
 
   const handleSaveIncome =
     useCallback(
@@ -430,6 +502,16 @@ export function BankDetailsPage() {
           return
         }
 
+        if (selectedIncomeSource) {
+          updateIncomeSource(
+            bankId,
+            selectedIncomeSource.id,
+            values,
+          )
+
+          return
+        }
+
         addIncomeSource(
           bankId,
           values,
@@ -438,6 +520,8 @@ export function BankDetailsPage() {
       [
         addIncomeSource,
         bankId,
+        selectedIncomeSource,
+        updateIncomeSource,
       ],
     )
 
@@ -839,6 +923,21 @@ export function BankDetailsPage() {
           </div>
         </section>
 
+        <IncomeSourcesList
+          incomeSources={
+            incomeSources
+          }
+          onAddIncome={
+            openIncomeForm
+          }
+          onEditIncome={
+            handleEditIncome
+          }
+          onRemoveIncome={
+            handleRemoveIncome
+          }
+        />
+
         <aside className={styles.securityNotice}>
           <WalletCards
             size={23}
@@ -879,6 +978,9 @@ export function BankDetailsPage() {
             isIncomeFormOpen
           }
           bank={bank}
+          initialValues={
+            selectedIncomeSource
+          }
           onClose={
             closeIncomeForm
           }
