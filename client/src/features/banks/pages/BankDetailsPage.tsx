@@ -22,6 +22,7 @@ import {
 
 import { Button } from '../../../components/ui/Button/IndexButton'
 import { routePaths } from '../../../routes/route-paths'
+import { CreditCardsList } from '../../cards/components/CreditCardsList/IndexCreditCardsList'
 import { CreditCardForm } from '../../cards/components/CreditCardForm/IndexCreditCardForm'
 import { useCreditCards } from '../../cards/context/CreditCardsContext'
 import type { CreditCardFormValues } from '../../cards/types/credit-card'
@@ -935,6 +936,15 @@ export function BankDetailsPage() {
           }
           onRemoveIncome={
             handleRemoveIncome
+          }
+        />
+
+        <CreditCardsList
+          creditCards={
+            creditCards
+          }
+          onAddCreditCard={
+            openCreditCardForm
           }
         />
 
