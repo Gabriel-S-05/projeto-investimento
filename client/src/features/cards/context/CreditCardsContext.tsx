@@ -396,8 +396,7 @@ export function CreditCardsProvider({
               bankCards.map(
                 (card) => {
                   if (
-                    card.id !==
-                    cardId
+                    card.id !== cardId
                   ) {
                     return card
                   }
@@ -438,14 +437,12 @@ export function CreditCardsProvider({
 
                     closingDay:
                       normalizeDay(
-                        values
-                          .closingDay,
+                        values.closingDay,
                       ),
 
                     dueDay:
                       normalizeDay(
-                        values
-                          .dueDay,
+                        values.dueDay,
                       ),
 
                     updatedAt:
@@ -457,7 +454,6 @@ export function CreditCardsProvider({
 
             return {
               ...currentCards,
-
               [bankId]: updatedCards,
             }
           },
@@ -474,21 +470,32 @@ export function CreditCardsProvider({
       ): void => {
         setCreditCardsByBankId(
           (currentCards) => {
-            const bankCards =
-              currentCards[
-                bankId
-              ] ?? []
-
             const updatedCards =
-              bankCards.filter(
+              (
+                currentCards[
+                  bankId
+                ] ?? []
+              ).filter(
                 (card) =>
-                  card.id !==
-                  cardId,
+                  card.id !== cardId,
               )
+
+            if (
+              updatedCards.length === 0
+            ) {
+              const nextCards = {
+                ...currentCards,
+              }
+
+              delete nextCards[
+                bankId
+              ]
+
+              return nextCards
+            }
 
             return {
               ...currentCards,
-
               [bankId]: updatedCards,
             }
           },
@@ -496,7 +503,6 @@ export function CreditCardsProvider({
       },
       [],
     )
-
   const removeCreditCardsByBank =
     useCallback(
       (

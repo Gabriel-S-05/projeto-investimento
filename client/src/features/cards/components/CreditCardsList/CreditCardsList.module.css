@@ -202,6 +202,78 @@
   color: var(--color-primary-600);
 }
 
+.itemAside {
+  display: grid;
+  flex: 0 0 auto;
+  justify-items: end;
+  gap: 10px;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+}
+
+.editButton,
+.removeButton {
+  display: inline-flex;
+  min-height: 35px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 800;
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.editButton {
+  color: var(--color-primary-800);
+  background: var(--color-primary-100);
+  border-color: var(--color-primary-200);
+}
+
+.editButton:hover {
+  color: var(--color-primary-900);
+  background: var(--color-primary-200);
+}
+
+.removeButton {
+  color: var(--color-danger);
+  background: var(--color-danger-soft);
+  border-color: rgba(199, 56, 79, 0.18);
+}
+
+.removeButton:hover {
+  background: rgba(199, 56, 79, 0.16);
+  border-color: rgba(199, 56, 79, 0.3);
+}
+
+.editButton:active,
+.removeButton:active {
+  transform: scale(0.97);
+}
+
+.editButton:focus-visible,
+.removeButton:focus-visible {
+  outline: 3px solid var(--color-primary-200);
+  outline-offset: 2px;
+}
+
+.removeButton:focus-visible {
+  outline-color: rgba(199, 56, 79, 0.26);
+}
+
 @media (max-width: 900px) {
   .financialGrid {
     grid-template-columns:
@@ -212,6 +284,21 @@
 @media (max-width: 680px) {
   .section {
     padding: 20px 16px;
+
+  .itemAside {
+    width: 100%;
+    justify-items: start;
+  }
+
+  .actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .editButton,
+  .removeButton {
+    flex: 1;
+  }
   }
 
   .header {
@@ -251,5 +338,17 @@
 @media (prefers-reduced-motion: reduce) {
   .item {
     transition: none;
+  }
+}
+
+@media (max-width: 380px) {
+  .actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .editButton,
+  .removeButton {
+    width: 100%;
   }
 }

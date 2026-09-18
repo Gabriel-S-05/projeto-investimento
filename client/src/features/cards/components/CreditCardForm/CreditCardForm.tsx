@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
   CalendarDays,
-  CreditCard,
+  CreditCard as CreditCardIcon,
   Save,
   ShieldCheck,
   X,
@@ -27,6 +27,7 @@ import {
   creditCardCategories,
   creditCardKinds,
   creditCardTypes,
+  type CreditCard,
   type CreditCardCategory,
   type CreditCardFormValues,
   type CreditCardKind,
@@ -45,6 +46,7 @@ interface SelectOption<
 interface CreditCardFormProps {
   isOpen: boolean
   bank: BankOption
+  initialValues?: CreditCard | null
   onClose: () => void
   onSave: (
     values: CreditCardFormValues,
@@ -282,6 +284,24 @@ function formatCurrencyInput(
   )
 }
 
+function formatCentsToCurrency(
+  valueInCents: number | null,
+): string {
+  if (valueInCents === null) {
+    return ''
+  }
+
+  return new Intl.NumberFormat(
+    'pt-BR',
+    {
+      style: 'currency',
+      currency: 'BRL',
+    },
+  ).format(
+    valueInCents / 100,
+  )
+}
+
 function createSelectStyles<
   TValue extends string,
 >(): StylesConfig<
@@ -449,6 +469,7 @@ const cardKindSelectStyles =
 export function CreditCardForm({
   isOpen,
   bank,
+  initialValues = null,
   onClose,
   onSave,
 }: CreditCardFormProps) {
@@ -539,6 +560,58 @@ export function CreditCardForm({
       return
     }
 
+    if (initialValues) {
+      reset({
+        nickname:
+          initialValues.nickname,
+
+        type:
+          initialValues.type,
+
+        category:
+          initialValues.category,
+
+        kind:
+          initialValues.kind,
+
+        totalLimit:
+          formatCentsToCurrency(
+            initialValues
+              .totalLimitInCents,
+          ),
+
+        usedLimit:
+          formatCentsToCurrency(
+            initialValues
+              .usedLimitInCents,
+          ),
+
+        currentInvoice:
+          formatCentsToCurrency(
+            initialValues
+              .currentInvoiceInCents,
+          ),
+
+        closingDay:
+          initialValues.closingDay !==
+          null
+            ? String(
+                initialValues.closingDay,
+              )
+            : '',
+
+        dueDay:
+          initialValues.dueDay !==
+          null
+            ? String(
+                initialValues.dueDay,
+              )
+            : '',
+      })
+
+      return
+    }
+
     reset({
       nickname:
         'Cartão principal',
@@ -552,6 +625,7 @@ export function CreditCardForm({
       dueDay: '',
     })
   }, [
+    initialValues,
     isOpen,
     reset,
   ])
@@ -705,7 +779,7 @@ export function CreditCardForm({
                 styles.headerIcon
               }
             >
-              <CreditCard
+              <CreditCardIcon
                 size={24}
                 aria-hidden="true"
               />
@@ -713,12 +787,16 @@ export function CreditCardForm({
 
             <div>
               <h2 id={titleId}>
-                Adicionar cartão
+                {initialValues
+                  ? 'Editar cartão'
+                  : 'Adicionar cartão'}
               </h2>
 
               <p id={descriptionId}>
-                Cadastre as informações
-                financeiras do cartão no{' '}
+                {initialValues
+                  ? 'Atualize as informações financeiras do cartão no '
+                  : 'Cadastre as informações financeiras do cartão no '}
+
                 <strong>
                   {bank.label}
                 </strong>
@@ -1048,7 +1126,7 @@ export function CreditCardForm({
                     styles.sectionHeader
                   }
                 >
-                  <CreditCard
+                  <CreditCardIcon
                     size={19}
                     aria-hidden="true"
                   />
@@ -1237,7 +1315,7 @@ export function CreditCardForm({
                   styles.debitNotice
                 }
               >
-                <CreditCard
+                <CreditCardIcon
                   size={20}
                   aria-hidden="true"
                 />
@@ -1294,7 +1372,9 @@ export function CreditCardForm({
                 aria-hidden="true"
               />
 
-              Salvar cartão
+              {initialValues
+                ? 'Salvar alterações'
+                : 'Salvar cartão'}
             </Button>
           </footer>
         </form>

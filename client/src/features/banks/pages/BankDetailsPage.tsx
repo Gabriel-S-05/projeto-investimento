@@ -8,7 +8,7 @@ import {
   Banknote,
   ChartLine,
   CircleDollarSign,
-  CreditCard,
+  CreditCard as CreditCardIcon,
   Landmark,
   Plus,
   ReceiptText,
@@ -25,11 +25,17 @@ import { routePaths } from '../../../routes/route-paths'
 import { CreditCardsList } from '../../cards/components/CreditCardsList/IndexCreditCardsList'
 import { CreditCardForm } from '../../cards/components/CreditCardForm/IndexCreditCardForm'
 import { useCreditCards } from '../../cards/context/CreditCardsContext'
-import type { CreditCardFormValues } from '../../cards/types/credit-card'
+import type {
+  CreditCard,
+  CreditCardFormValues,
+} from '../../cards/types/credit-card'
 import { IncomeForm } from '../../income/components/IncomeForm/IndexIncomeForm'
 import { IncomeSourcesList } from '../../income/components/IncomeSourceList/IndexIncomeSourceList'
 import { useIncome } from '../../income/context/IncomeContext'
-import type { IncomeFormValues, IncomeSource } from '../../income/types/income'
+import type {
+  IncomeFormValues,
+  IncomeSource,
+} from '../../income/types/income'
 import { InstallmentForm } from '../../installments/components/InstallmentForm/IndexInstallmentForm'
 import { useInstallments } from '../../installments/context/InstallmentsContext'
 import type { InstallmentFormValues } from '../../installments/types/installment'
@@ -176,6 +182,13 @@ export function BankDetailsPage() {
   ] = useState(false)
 
   const [
+    selectedCreditCard,
+    setSelectedCreditCard,
+  ] = useState<CreditCard | null>(
+    null,
+  )
+
+  const [
     isInstallmentFormOpen,
     setIsInstallmentFormOpen,
   ] = useState(false)
@@ -212,6 +225,8 @@ export function BankDetailsPage() {
     getCreditCards,
     getCurrentInvoiceInCents,
     addCreditCard,
+    updateCreditCard,
+    removeCreditCard,
   } = useCreditCards()
 
   const {
@@ -528,6 +543,10 @@ export function BankDetailsPage() {
 
   const openCreditCardForm =
     useCallback((): void => {
+      setSelectedCreditCard(
+        null,
+      )
+
       setIsCreditCardFormOpen(
         true,
       )
@@ -538,7 +557,96 @@ export function BankDetailsPage() {
       setIsCreditCardFormOpen(
         false,
       )
+
+      setSelectedCreditCard(
+        null,
+      )
     }, [])
+
+  const handleEditCreditCard =
+    useCallback(
+      (
+        creditCard:
+          CreditCard,
+      ): void => {
+        setSelectedCreditCard(
+          creditCard,
+        )
+
+        setIsCreditCardFormOpen(
+          true,
+        )
+      },
+      [],
+    )
+
+  const handleRemoveCreditCard =
+    useCallback(
+      (
+        creditCard:
+          CreditCard,
+      ): void => {
+        if (!bankId) {
+          return
+        }
+
+        const linkedInstallments =
+          installments.filter(
+            (installment) =>
+              installment.cardId ===
+              creditCard.id,
+          )
+
+        if (
+          linkedInstallments.length > 0
+        ) {
+          window.alert(
+            `O cartão "${creditCard.nickname}" possui ${
+              linkedInstallments.length
+            } ${
+              linkedInstallments.length === 1
+                ? 'compra parcelada vinculada'
+                : 'compras parceladas vinculadas'
+            }. Remova ou transfira essas compras antes de excluir o cartão.`,
+          )
+
+          return
+        }
+
+        const shouldRemove =
+          window.confirm(
+            `Deseja remover o cartão "${creditCard.nickname}"?`,
+          )
+
+        if (!shouldRemove) {
+          return
+        }
+
+        removeCreditCard(
+          bankId,
+          creditCard.id,
+        )
+
+        if (
+          selectedCreditCard?.id ===
+          creditCard.id
+        ) {
+          setSelectedCreditCard(
+            null,
+          )
+
+          setIsCreditCardFormOpen(
+            false,
+          )
+        }
+      },
+      [
+        bankId,
+        installments,
+        removeCreditCard,
+        selectedCreditCard,
+      ],
+    )
 
   const handleSaveCreditCard =
     useCallback(
@@ -550,6 +658,16 @@ export function BankDetailsPage() {
           return
         }
 
+        if (selectedCreditCard) {
+          updateCreditCard(
+            bankId,
+            selectedCreditCard.id,
+            values,
+          )
+
+          return
+        }
+
         addCreditCard(
           bankId,
           values,
@@ -558,6 +676,8 @@ export function BankDetailsPage() {
       [
         addCreditCard,
         bankId,
+        selectedCreditCard,
+        updateCreditCard,
       ],
     )
 
@@ -861,7 +981,7 @@ export function BankDetailsPage() {
 
             <EmptySection
               icon={
-                <CreditCard
+                <CreditCardIcon
                   size={24}
                   aria-hidden="true"
                 />
@@ -946,6 +1066,12 @@ export function BankDetailsPage() {
           onAddCreditCard={
             openCreditCardForm
           }
+          onEditCreditCard={
+            handleEditCreditCard
+          }
+          onRemoveCreditCard={
+            handleRemoveCreditCard
+          }
         />
 
         <aside className={styles.securityNotice}>
@@ -1004,6 +1130,9 @@ export function BankDetailsPage() {
             isCreditCardFormOpen
           }
           bank={bank}
+          initialValues={
+            selectedCreditCard
+          }
           onClose={
             closeCreditCardForm
           }

@@ -2,8 +2,10 @@ import {
   CalendarDays,
   CreditCard as CreditCardIcon,
   Gauge,
+  Pencil,
   Plus,
   ReceiptText,
+  Trash2,
   WalletCards,
 } from 'lucide-react'
 
@@ -23,6 +25,14 @@ import styles from './CreditCardsList.module.css'
 interface CreditCardsListProps {
   creditCards: CreditCard[]
   onAddCreditCard: () => void
+
+  onEditCreditCard?: (
+    creditCard: CreditCard,
+  ) => void
+
+  onRemoveCreditCard?: (
+    creditCard: CreditCard,
+  ) => void
 }
 
 function formatCurrency(
@@ -97,12 +107,18 @@ function getAvailableLimitInCents(
 export function CreditCardsList({
   creditCards,
   onAddCreditCard,
+  onEditCreditCard,
+  onRemoveCreditCard,
 }: CreditCardsListProps) {
   if (
     creditCards.length === 0
   ) {
     return null
   }
+
+  const hasItemActions =
+    Boolean(onEditCreditCard) ||
+    Boolean(onRemoveCreditCard)
 
   return (
     <section
@@ -215,17 +231,82 @@ export function CreditCardsList({
                       </span>
                     </div>
 
-                    <span
+                    <div
                       className={
-                        hasCreditFunction
-                          ? styles.creditBadge
-                          : styles.debitBadge
+                        styles.itemAside
                       }
                     >
-                      {hasCreditFunction
-                        ? 'Função crédito'
-                        : 'Somente débito'}
-                    </span>
+                      <span
+                        className={
+                          hasCreditFunction
+                            ? styles.creditBadge
+                            : styles.debitBadge
+                        }
+                      >
+                        {hasCreditFunction
+                          ? 'Função crédito'
+                          : 'Somente débito'}
+                      </span>
+
+                      {hasItemActions ? (
+                        <div
+                          className={
+                            styles.actions
+                          }
+                          aria-label={`Ações para ${creditCard.nickname}`}
+                        >
+                          {onEditCreditCard ? (
+                            <button
+                              type="button"
+                              className={
+                                styles.editButton
+                              }
+                              onClick={() => {
+                                onEditCreditCard(
+                                  creditCard,
+                                )
+                              }}
+                              aria-label={`Editar ${creditCard.nickname}`}
+                              title="Editar cartão"
+                            >
+                              <Pencil
+                                size={17}
+                                aria-hidden="true"
+                              />
+
+                              <span>
+                                Editar
+                              </span>
+                            </button>
+                          ) : null}
+
+                          {onRemoveCreditCard ? (
+                            <button
+                              type="button"
+                              className={
+                                styles.removeButton
+                              }
+                              onClick={() => {
+                                onRemoveCreditCard(
+                                  creditCard,
+                                )
+                              }}
+                              aria-label={`Remover ${creditCard.nickname}`}
+                              title="Remover cartão"
+                            >
+                              <Trash2
+                                size={17}
+                                aria-hidden="true"
+                              />
+
+                              <span>
+                                Remover
+                              </span>
+                            </button>
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </div>
                   </div>
 
                   {hasCreditFunction ? (
