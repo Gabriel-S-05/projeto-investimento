@@ -1,0 +1,3 @@
+export {
+  InstallmentsList,
+} from './InstallmentsList'

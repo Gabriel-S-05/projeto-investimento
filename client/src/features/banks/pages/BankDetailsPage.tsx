@@ -36,6 +36,7 @@ import type {
   IncomeFormValues,
   IncomeSource,
 } from '../../income/types/income'
+import { InstallmentsList } from '../../installments/components/InstallmentsList/IndexInstallmentsList'
 import { InstallmentForm } from '../../installments/components/InstallmentForm/IndexInstallmentForm'
 import { useInstallments } from '../../installments/context/InstallmentsContext'
 import type { InstallmentFormValues } from '../../installments/types/installment'
@@ -1071,6 +1072,18 @@ export function BankDetailsPage() {
           }
           onRemoveCreditCard={
             handleRemoveCreditCard
+          }
+        />
+
+        <InstallmentsList
+          installments={
+            installments
+          }
+          creditCards={
+            creditCards
+          }
+          onAddInstallment={
+            openInstallmentForm
           }
         />
 
