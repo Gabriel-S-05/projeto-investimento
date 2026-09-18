@@ -117,9 +117,7 @@ function createInstallmentId(): string {
 function normalizeMoneyValue(
   value: number,
 ): number {
-  if (
-    !Number.isFinite(value)
-  ) {
+  if (!Number.isFinite(value)) {
     return 0
   }
 
@@ -132,9 +130,7 @@ function normalizeMoneyValue(
 function normalizeTotalInstallments(
   value: number,
 ): number {
-  if (
-    !Number.isFinite(value)
-  ) {
+  if (!Number.isFinite(value)) {
     return 2
   }
 
@@ -151,9 +147,7 @@ function normalizeCurrentInstallment(
   value: number,
   totalInstallments: number,
 ): number {
-  if (
-    !Number.isFinite(value)
-  ) {
+  if (!Number.isFinite(value)) {
     return 1
   }
 
@@ -170,9 +164,7 @@ function calculateInstallmentAmountInCents(
   totalAmountInCents: number,
   totalInstallments: number,
 ): number {
-  if (
-    totalInstallments <= 0
-  ) {
+  if (totalInstallments <= 0) {
     return 0
   }
 
@@ -396,6 +388,12 @@ export function InstallmentsProvider({
         const currentDate =
           new Date().toISOString()
 
+        const status =
+          calculateStatus(
+            currentInstallment,
+            totalInstallments,
+          )
+
         const installment:
           InstallmentPurchase = {
             id:
@@ -412,11 +410,7 @@ export function InstallmentsProvider({
             category:
               values.category,
 
-            status:
-              calculateStatus(
-                currentInstallment,
-                totalInstallments,
-              ),
+            status,
 
             totalAmountInCents,
 
@@ -434,8 +428,7 @@ export function InstallmentsProvider({
               values.purchaseDate,
 
             nextDueDate:
-              currentInstallment >=
-              totalInstallments
+              status === 'completed'
                 ? null
                 : values.nextDueDate,
 
@@ -450,7 +443,6 @@ export function InstallmentsProvider({
           (currentInstallments) => ({
             ...currentInstallments,
             [bankId]:
-
             [
               ...(
                 currentInstallments[
@@ -573,8 +565,7 @@ export function InstallmentsProvider({
       (
         bankId: string,
         installmentId: string,
-        currentInstallment:
-          number,
+        currentInstallment: number,
       ): void => {
         setInstallmentsByBankId(
           (currentInstallments) => {
@@ -589,6 +580,13 @@ export function InstallmentsProvider({
                   if (
                     installment.id !==
                     installmentId
+                  ) {
+                    return installment
+                  }
+
+                  if (
+                    installment.status !==
+                    'active'
                   ) {
                     return installment
                   }
@@ -665,10 +663,21 @@ export function InstallmentsProvider({
                     return installment
                   }
 
+                  const isCompleted =
+                    status ===
+                    'completed'
+
                   return {
                     ...installment,
 
                     status,
+
+                    currentInstallment:
+                      isCompleted
+                        ? installment
+                            .totalInstallments
+                        : installment
+                            .currentInstallment,
 
                     nextDueDate:
                       status ===
@@ -703,16 +712,28 @@ export function InstallmentsProvider({
       ): void => {
         setInstallmentsByBankId(
           (currentInstallments) => {
+            const bankInstallments =
+              currentInstallments[
+                bankId
+              ]
+
+            if (!bankInstallments) {
+              return currentInstallments
+            }
+
             const updatedInstallments =
-              (
-                currentInstallments[
-                  bankId
-                ] ?? []
-              ).filter(
+              bankInstallments.filter(
                 (installment) =>
                   installment.id !==
                   installmentId,
               )
+
+            if (
+              updatedInstallments.length ===
+              bankInstallments.length
+            ) {
+              return currentInstallments
+            }
 
             if (
               updatedInstallments.length ===
@@ -748,16 +769,28 @@ export function InstallmentsProvider({
       ): void => {
         setInstallmentsByBankId(
           (currentInstallments) => {
+            const bankInstallments =
+              currentInstallments[
+                bankId
+              ]
+
+            if (!bankInstallments) {
+              return currentInstallments
+            }
+
             const updatedInstallments =
-              (
-                currentInstallments[
-                  bankId
-                ] ?? []
-              ).filter(
+              bankInstallments.filter(
                 (installment) =>
                   installment.cardId !==
                   cardId,
               )
+
+            if (
+              updatedInstallments.length ===
+              bankInstallments.length
+            ) {
+              return currentInstallments
+            }
 
             if (
               updatedInstallments.length ===
@@ -792,6 +825,14 @@ export function InstallmentsProvider({
       ): void => {
         setInstallmentsByBankId(
           (currentInstallments) => {
+            if (
+              !currentInstallments[
+                bankId
+              ]
+            ) {
+              return currentInstallments
+            }
+
             const nextInstallments = {
               ...currentInstallments,
             }

@@ -119,8 +119,7 @@ function getRemainingInstallments(
 
   return Math.max(
     installment.totalInstallments -
-      installment.currentInstallment +
-      1,
+      installment.currentInstallment,
     0,
   )
 }
