@@ -1,6 +1,7 @@
 import {
   CalendarDays,
   CheckCircle2,
+  ChevronRight,
   CircleX,
   CreditCard as CreditCardIcon,
   Plus,
@@ -29,6 +30,10 @@ interface InstallmentsListProps {
 
   onAddInstallment:
     () => void
+
+  onAdvanceInstallment?: (
+    installment: InstallmentPurchase,
+  ) => void
 }
 
 function formatCurrency(
@@ -180,6 +185,7 @@ export function InstallmentsList({
   installments,
   creditCards,
   onAddInstallment,
+  onAdvanceInstallment,
 }: InstallmentsListProps) {
   if (
     installments.length === 0
@@ -286,33 +292,73 @@ export function InstallmentsList({
                       </span>
                     </div>
 
-                    <span
-                      className={[
-                        styles.statusBadge,
-                        installment.status ===
-                        'active'
-                          ? styles.activeBadge
-                          : '',
-                        installment.status ===
-                        'completed'
-                          ? styles.completedBadge
-                          : '',
-                        installment.status ===
-                        'cancelled'
-                          ? styles.cancelledBadge
-                          : '',
-                      ]
-                        .filter(Boolean)
-                        .join(' ')}
+                    <div
+                      className={
+                        styles.itemAside
+                      }
                     >
-                      {getStatusIcon(
-                        installment.status,
-                      )}
+                      <span
+                        className={[
+                          styles.statusBadge,
+                          installment.status ===
+                          'active'
+                            ? styles.activeBadge
+                            : '',
+                          installment.status ===
+                          'completed'
+                            ? styles.completedBadge
+                            : '',
+                          installment.status ===
+                          'cancelled'
+                            ? styles.cancelledBadge
+                            : '',
+                        ]
+                          .filter(Boolean)
+                          .join(' ')}
+                      >
+                        {getStatusIcon(
+                          installment.status,
+                        )}
 
-                      {getStatusLabel(
-                        installment.status,
-                      )}
-                    </span>
+                        {getStatusLabel(
+                          installment.status,
+                        )}
+                      </span>
+
+                      {installment.status ===
+                        'active' &&
+                      installment.currentInstallment <
+                        installment.totalInstallments &&
+                      onAdvanceInstallment ? (
+                        <button
+                          type="button"
+                          className={
+                            styles.advanceButton
+                          }
+                          onClick={() => {
+                            onAdvanceInstallment(
+                              installment,
+                            )
+                          }}
+                          aria-label={`Avançar a compra ${installment.description} para a parcela ${
+                            installment.currentInstallment +
+                            1
+                          } de ${
+                            installment.totalInstallments
+                          }`}
+                          title="Avançar parcela"
+                        >
+                          <span>
+                            Avançar parcela
+                          </span>
+
+                          <ChevronRight
+                            size={17}
+                            aria-hidden="true"
+                          />
+                        </button>
+                      ) : null}
+                    </div>
                   </div>
 
                   <div

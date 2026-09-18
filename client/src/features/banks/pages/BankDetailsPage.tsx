@@ -39,7 +39,7 @@ import type {
 import { InstallmentsList } from '../../installments/components/InstallmentsList/IndexInstallmentsList'
 import { InstallmentForm } from '../../installments/components/InstallmentForm/IndexInstallmentForm'
 import { useInstallments } from '../../installments/context/InstallmentsContext'
-import type { InstallmentFormValues } from '../../installments/types/installment'
+import type { InstallmentFormValues, InstallmentPurchase } from '../../installments/types/installment'
 import { InvestmentForm } from '../../investments/components/InvestmentForm/IndexInvestForm'
 import { useInvestments } from '../../investments/context/InvestmentsContext'
 import type { InvestmentFormValues } from '../../investments/types/investment'
@@ -234,6 +234,7 @@ export function BankDetailsPage() {
     getInstallments,
     getMonthlyCommitmentInCents,
     addInstallment,
+    updateInstallmentProgress,
   } = useInstallments()
 
   const {
@@ -717,6 +718,66 @@ export function BankDetailsPage() {
       ],
     )
 
+  const handleAdvanceInstallment =
+    useCallback(
+      (
+        installment:
+          InstallmentPurchase,
+      ): void => {
+        if (
+          !bankId ||
+          installment.status !==
+            'active'
+        ) {
+          return
+        }
+
+        const nextInstallment =
+          Math.min(
+            installment
+              .currentInstallment + 1,
+            installment
+              .totalInstallments,
+          )
+
+        if (
+          nextInstallment <=
+          installment.currentInstallment
+        ) {
+          return
+        }
+
+        const willComplete =
+          nextInstallment >=
+          installment
+            .totalInstallments
+
+        const confirmationMessage =
+          willComplete
+            ? `Deseja registrar a última parcela de "${installment.description}" e concluir o parcelamento?`
+            : `Deseja avançar "${installment.description}" para a parcela ${nextInstallment} de ${installment.totalInstallments}?`
+
+        const shouldAdvance =
+          window.confirm(
+            confirmationMessage,
+          )
+
+        if (!shouldAdvance) {
+          return
+        }
+
+        updateInstallmentProgress(
+          bankId,
+          installment.id,
+          nextInstallment,
+        )
+      },
+      [
+        bankId,
+        updateInstallmentProgress,
+      ],
+    )
+
   const openInvestmentForm =
     useCallback((): void => {
       setIsInvestmentFormOpen(
@@ -1084,6 +1145,9 @@ export function BankDetailsPage() {
           }
           onAddInstallment={
             openInstallmentForm
+          }
+          onAdvanceInstallment={
+            handleAdvanceInstallment
           }
         />
 

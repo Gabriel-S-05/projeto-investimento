@@ -552,7 +552,7 @@ export function InstallmentsProvider({
             return {
               ...currentInstallments,
 
-              updatedInstallments,
+              [bankId]:updatedInstallments,
             }
           },
         )
@@ -629,8 +629,7 @@ export function InstallmentsProvider({
 
             return {
               ...currentInstallments,
-
-              updatedInstallments,
+              [bankId]: updatedInstallments,
             }
           },
         )
@@ -696,7 +695,7 @@ export function InstallmentsProvider({
             return {
               ...currentInstallments,
 
-              updatedInstallments,
+              [bankId]:updatedInstallments,
             }
           },
         )
@@ -753,7 +752,7 @@ export function InstallmentsProvider({
             return {
               ...currentInstallments,
 
-              updatedInstallments,
+              [bankId]: updatedInstallments,
             }
           },
         )
@@ -810,7 +809,7 @@ export function InstallmentsProvider({
             return {
               ...currentInstallments,
 
-              updatedInstallments,
+              [bankId]:updatedInstallments,
             }
           },
         )
